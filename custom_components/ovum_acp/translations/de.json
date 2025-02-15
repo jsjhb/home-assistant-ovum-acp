@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Modbus-Parameter für die Verbindung zur Ovum WP",
+        "data": {
+          "host": "IP-Adresse der WP-Steuerung oder EPoCA",
+          "name": "Präfix für die Sensoren dieses Geräts",
+          "port": "Modbus TCP-Port, auf den die Steuerung konfiguriert ist",
+          "unit": "Modbus Unit ID, auf die die Steuerung konfiguriert ist",
+          "scan_interval": "Abfrageintervall in Sekunden"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Gerät ist bereits konfiguriert"
+    },
+    "abort": {
+      "already_configured": "Gerät ist bereits konfiguriert"
+    }
+  }
+}

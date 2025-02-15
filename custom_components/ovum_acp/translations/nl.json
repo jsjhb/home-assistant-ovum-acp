@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Definieer uw Ovum warmtepomp modbus-verbinding",
+        "data": {
+          "host": "Het ip-adres van uw controleur of EPoCA modbus apparaat",
+          "name": "Het voorvoegsel dat moet worden gebruikt voor uw Modbus sensoren",
+          "port": "De TCP-poort waarop verbinding moet worden gemaakt met de Ovum warmtepomp",
+          "unit": "De Modbus unit ID waarop verbinding moet worden gemaakt met de Ovum warmtepomp",
+          "scan_interval": "De polling-frequentie van de modbus registratie in seconden"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Apparaat is al geconfigureerd"
+    },
+    "abort": {
+      "already_configured": "Apparaat is al geconfigureerd"
+    }
+  }
+}

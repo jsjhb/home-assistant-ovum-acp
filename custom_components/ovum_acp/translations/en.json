@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Modbus parameters for Ovum HP",
+        "data": {
+          "host": "IP address heat pump controller or EPoCA",
+          "name": "prefix of sensors of this device",
+          "port": "Modbus TCP port of listening device",
+          "unit": "Modbus unit ID of listening device",
+          "scan_interval": "polling interval in seconds"
+        }
+      }
+    },
+    "error": {
+      "already_configured": "Device is already configured"
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  }
+}
