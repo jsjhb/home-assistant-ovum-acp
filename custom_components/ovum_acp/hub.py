@@ -15,7 +15,7 @@ from pymodbus.register_read_message import ReadHoldingRegistersResponse
 _LOGGER = logging.getLogger(__name__)
 
 class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
-    def __init__(self, hass: HomeAssistant, name: str, host: str, port: int, unit: int, scan_interval: int) -> None:
+    def __init__(self, hass: HomeAssistant, name: str, host: str, port: int, slave: int, scan_interval: int) -> None:
         super().__init__(
             hass,
             _LOGGER,
@@ -25,7 +25,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         )
         self._host = host
         self._port = port
-        self._unit = unit
+        self._slave = slave
         self._client: Optional[AsyncModbusTcpClient] = None
         self._read_lock = asyncio.Lock()
         self._connection_lock = asyncio.Lock()
@@ -43,25 +43,25 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         client = AsyncModbusTcpClient(
             host=self._host,
             port=self._port,
-            unit=selt._unit,
+            slave=self._slave,
             timeout=10,
             retries=self._max_retries,
             retry_on_empty=True,
             close_comm_on_error=False,
             strict=False
         )
-        _LOGGER.debug(f"Created new Modbus client: AsyncModbusTcpClient {self._host}:{self._port}, unit {self._unit}")
+        _LOGGER.debug(f"Created new Modbus client: AsyncModbusTcpClient {self._host}:{self._port}, slave {self._slave}")
         return client
 
-    async def update_connection_settings(self, host: str, port: int, unit: int, scan_interval: int) -> None:
+    async def update_connection_settings(self, host: str, port: int, slave: int, scan_interval: int) -> None:
         """Updates the connection settings with improved synchronization."""
         async with self._connection_lock:
             self.updating_settings = True
             try:
-                connection_changed = (host != self._host) or (port != self._port) or (unit != self._unit)
+                connection_changed = (host != self._host) or (port != self._port) or (slave != self._slave)
                 self._host = host
                 self._port = port
-                self._unit = unit
+                self._slave = slave
                 self.update_interval = timedelta(seconds=scan_interval)
 
                 if connection_changed:
@@ -128,7 +128,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
     async def try_read_registers(
         self,
-        unit: int,
+        slave: int,
         address: int,
         count: int,
         max_retries: int = 3,
@@ -145,7 +145,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
                         # Read attempt with Modbus client
                         async with self._read_lock:
-                                response = await self._client.read_holding_registers(address, count, slave=unit)
+                                response = await self._client.read_holding_registers(address, count, slave=slave)
 
                         # Check the response and number of registers
                         if not isinstance(response, ReadHoldingRegistersResponse) or response.isError() or len(response.registers) != count:
@@ -172,7 +172,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
                                         _LOGGER.info("Reconnected Modbus client successfully.")
 
         # If all attempts failed
-        _LOGGER.error(f"Failed to read registers from unit {unit}, address {address} after {max_retries} attempts")
+        _LOGGER.error(f"Failed to read registers from slave {slave}, address {address} after {max_retries} attempts")
         raise ConnectionException(f"Read operation failed for address {address} after {max_retries} attempts")
 
     async def _async_update_data(self) -> Dict[str, Any]:
@@ -231,7 +231,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             Dict[str, Any]: Decoded data as a dictionary.
         """
         try:
-            regs = await self.try_read_registers(unit, start_address, count)
+            regs = await self.try_read_registers(slave, start_address, count)
             decoder = BinaryPayloadDecoder.fromRegisters(regs, byteorder=Endian.BIG)
             new_data: Dict[str, Any] = {}
 
@@ -267,7 +267,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
     async def read_modbus_firmware_data(self) -> Dict[str, Any]:
         """Reads basic firmware data."""
         try:
-            regs = await self.try_read_registers(unit, 0x7, 2)
+            regs = await self.try_read_registers(slave, 0x7, 2)
             decoder = BinaryPayloadDecoder.fromRegisters(regs, byteorder=Endian.BIG)
             data = {}
 
