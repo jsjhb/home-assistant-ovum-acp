@@ -10,7 +10,6 @@ from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.exceptions import ConnectionException, ModbusIOException
-from pymodbus.register_read_message import ReadHoldingRegistersResponse
 
 _LOGGER = logging.getLogger(__name__)
 
