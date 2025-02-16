@@ -148,5 +148,3 @@ SENSOR_TYPES = {
    
 }
 
-
-}

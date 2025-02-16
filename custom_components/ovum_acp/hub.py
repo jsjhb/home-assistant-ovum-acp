@@ -127,7 +127,6 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
     async def try_read_registers(
         self,
-        slave: int,
         address: int,
         count: int,
         max_retries: int = 3,
@@ -144,7 +143,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
                         # Read attempt with Modbus client
                         async with self._read_lock:
-                                response = await self._client.read_holding_registers(address, count, slave=slave)
+                                response = await self._client.read_holding_registers(address, count, slave=self._slave)
 
                         # Check the response and number of registers
                         if not isinstance(response, ReadHoldingRegistersResponse) or response.isError() or len(response.registers) != count:
@@ -171,7 +170,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
                                         _LOGGER.info("Reconnected Modbus client successfully.")
 
         # If all attempts failed
-        _LOGGER.error(f"Failed to read registers from slave {slave}, address {address} after {max_retries} attempts")
+        _LOGGER.error(f"Failed to read registers from slave {self._slave}, address {address} after {max_retries} attempts")
         raise ConnectionException(f"Read operation failed for address {address} after {max_retries} attempts")
 
     async def _async_update_data(self) -> Dict[str, Any]:
@@ -180,22 +179,22 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
                 self.firmware_data.update(await self.read_modbus_firmware_data())
 
         data_read_methods = [
-                self.read_modbus_realtime_data1,
-                self.read_modbus_realtime_data2,
-                self.read_modbus_realtime_data3,
-                self.read_modbus_realtime_data4,
-                self.read_modbus_realtime_data5,
-                self.read_modbus_realtime_data6,
-                self.read_modbus_realtime_data7,
-                self.read_modbus_realtime_data8,
-                self.read_modbus_realtime_data9,
-                self.read_modbus_realtime_dataA,
-                self.read_modbus_realtime_dataB,
-                self.read_modbus_realtime_dataC,
-                self.read_modbus_realtime_dataD,
-                self.read_modbus_realtime_dataE,
-                self.read_modbus_realtime_dataF,
-                self.read_modbus_realtime_dataG,
+                self.read_realtime_data_1,
+                self.read_realtime_data_2,
+                self.read_realtime_data_3,
+                self.read_realtime_data_4,
+                self.read_realtime_data_5,
+                self.read_realtime_data_6,
+                self.read_realtime_data_7,
+                self.read_realtime_data_8,
+                self.read_realtime_data_9,
+                self.read_realtime_data_A,
+                self.read_realtime_data_B,
+                self.read_realtime_data_C,
+                self.read_realtime_data_D,
+                self.read_realtime_data_E,
+                self.read_realtime_data_F,
+                self.read_realtime_data_G,
         ]
 
         combined_data = {**self.firmware_data}
@@ -230,7 +229,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             Dict[str, Any]: Decoded data as a dictionary.
         """
         try:
-            regs = await self.try_read_registers(slave, start_address, count)
+            regs = await self.try_read_registers(start_address, count)
             decoder = BinaryPayloadDecoder.fromRegisters(regs, byteorder=Endian.BIG)
             new_data: Dict[str, Any] = {}
 
@@ -266,7 +265,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
     async def read_modbus_firmware_data(self) -> Dict[str, Any]:
         """Reads basic firmware data."""
         try:
-            regs = await self.try_read_registers(slave, 0x7, 2)
+            regs = await self.try_read_registers(0x7, 2)
             decoder = BinaryPayloadDecoder.fromRegisters(regs, byteorder=Endian.BIG)
             data = {}
 
@@ -279,7 +278,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             _LOGGER.error(f"Error reading firmware data: {e}")
             return {}
 
-    async def read_modbus_realtime_data1(self) -> Dict[str, Any]:
+    async def read_realtime_data_1(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 29-37."""
 
         decode_instructions_realtime_data1 = [
