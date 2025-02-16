@@ -1,4 +1,4 @@
-"""SAJ Modbus Hub."""
+"""Ovum Modbus Hub."""
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -6,28 +6,28 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import logging
 
-from .const import DOMAIN, SENSOR_TYPES, SajModbusSensorEntityDescription
-from .hub import SAJModbusHub
+from .const import DOMAIN, SENSOR_TYPES, OvumModbusSensorEntityDescription
+from .hub import OvumModbusHub
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    """Set up SAJ sensors from a config entry."""
-    hub: SAJModbusHub = hass.data[DOMAIN][entry.entry_id]["hub"]
+    """Set up Ovum sensors from a config entry."""
+    hub: OvumModbusHub = hass.data[DOMAIN][entry.entry_id]["hub"]
     device_info = hass.data[DOMAIN][entry.entry_id]["device_info"]
     
     entities = []
     for description in SENSOR_TYPES.values():
-        entity = SajSensor(hub, device_info, description)
+        entity = OvumSensor(hub, device_info, description)
         entities.append(entity)
 
     async_add_entities(entities)
-    _LOGGER.info(f"Added {len(entities)} SAJ sensors")
+    _LOGGER.info(f"Added {len(entities)} Ovum sensors")
 
-class SajSensor(CoordinatorEntity, SensorEntity):
-    """Representation of an SAJ Modbus sensor."""
+class OvumSensor(CoordinatorEntity, SensorEntity):
+    """Representation of an Ovum Modbus sensor."""
 
-    def __init__(self, hub: SAJModbusHub, device_info: dict, description: SajModbusSensorEntityDescription):
+    def __init__(self, hub: OvumModbusHub, device_info: dict, description: OvumModbusSensorEntityDescription):
         """Initialize the sensor."""
         super().__init__(coordinator=hub)
         self.entity_description = description

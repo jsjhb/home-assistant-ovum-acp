@@ -30,7 +30,6 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         self._connection_lock = asyncio.Lock()
         self.updating_settings = False
         self.firmware_data: Dict[str, Any] = {}
-        # self.last_valid_data wurde entfernt
         self._closing = False
         self._reconnecting = False
         self._max_retries = 2
@@ -42,14 +41,9 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         client = AsyncModbusTcpClient(
             host=self._host,
             port=self._port,
-            slave=self._slave,
             timeout=10,
-            retries=self._max_retries,
-            retry_on_empty=True,
-            close_comm_on_error=False,
-            strict=False
         )
-        _LOGGER.debug(f"Created new Modbus client: AsyncModbusTcpClient {self._host}:{self._port}, slave {self._slave}")
+        _LOGGER.debug(f"Created new Modbus client: AsyncModbusTcpClient {self._host}:{self._port}.")
         return client
 
     async def update_connection_settings(self, host: str, port: int, slave: int, scan_interval: int) -> None:
@@ -73,136 +67,119 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
     async def _safe_close(self) -> bool:
         """Safely closes the Modbus connection."""
         if not self._client:
-                return True
+            return True
 
         try:
-                if self._client.connected:
-                        close = getattr(self._client, "close", None)
-                        if close:
-                                await close() if inspect.iscoroutinefunction(close) else close()
-                        transport = getattr(self._client, "transport", None)
-                        if transport:
-                                transport.close()
-                        await asyncio.sleep(0.2)
-                        return not self._client.connected
-                return True
+            if self._client.connected:
+                close = getattr(self._client, "close", None)
+                if close:
+                    await close() if inspect.iscoroutinefunction(close) else close()
+                transport = getattr(self._client, "transport", None)
+                if transport:
+                    transport.close()
+                await asyncio.sleep(0.2)
+                return not self._client.connected
+            return True
         except Exception as e:
-                _LOGGER.warning(f"Error during safe close: {e}", exc_info=True)
-                return False
+            _LOGGER.warning(f"Error during safe close: {e}", exc_info=True)
+            return False
         finally:
-                self._client = None
+            self._client = None
 
 
     async def close(self) -> None:
         """Closes the Modbus connection with improved resource management."""
         if self._closing:
-                return
+            return
 
         self._closing = True
         try:
-                async with asyncio.timeout(5.0):
-                        async with self._connection_lock:
-                                await self._safe_close()
+            async with asyncio.timeout(5.0):
+                async with self._connection_lock:
+                    await self._safe_close()
         except (asyncio.TimeoutError, Exception) as e:
-                _LOGGER.warning(f"Error during close: {e}", exc_info=True)
+            _LOGGER.warning(f"Error during close: {e}", exc_info=True)
         finally:
-                self._closing = False
+            self._closing = False
 
 
     async def ensure_connection(self) -> bool:
         """Ensure the Modbus connection is established and stable."""
         if self._client and self._client.connected:
-                return True
+            return True
 
+        self._client = self._client or self._create_client()
         try:
-                self._client = self._client or self._create_client()
-                if await asyncio.wait_for(self._client.connect(), timeout=10):
-                        _LOGGER.info("Successfully connected to Modbus server.")
-                        return True
-                _LOGGER.warning("Failed to connect to Modbus server.")
+            await asyncio.wait_for(self._client.connect(), timeout=10)
+            _LOGGER.info("Successfully connected to Modbus server.")
         except Exception as e:
-                _LOGGER.warning(f"Error during connection attempt: {e}", exc_info=True)
-
-        return False
+            _LOGGER.warning(f"Error during connection attempt: {e}", exc_info=True)
+            raise ConnectionException("Failed to connect to Modbus server.") from e
 
     async def try_read_registers(
         self,
+        unit: int,
         address: int,
         count: int,
         max_retries: int = 3,
         base_delay: float = 2.0
     ) -> List[int]:
-        """Reads Modbus registers with optimized error handling and on-demand connection check."""
-        start_time = time.time()
-
+        """Reads Modbus registers with optimized error handling."""
         for attempt in range(max_retries):
-                try:
-                        # Establish connection only if needed
-                        if not self._client or not await self.ensure_connection():
-                                raise ConnectionException("Unable to establish connection")
+            try:
+                async with self._read_lock:
+                    response = await self._client.read_holding_registers(address=address, count=count, slave=self._slave)
 
-                        # Read attempt with Modbus client
-                        async with self._read_lock:
-                                response = await self._client.read_holding_registers(address, count, slave=self._slave)
+                if (not response)  or response.isError() or len(response.registers) != count:
+                    raise ModbusIOException(f"Invalid response from address {address}")
 
-                        # Check the response and number of registers
-                        if not isinstance(response, ReadHoldingRegistersResponse) or response.isError() or len(response.registers) != count:
-                                raise ModbusIOException(f"Invalid response from address {address}")
+                return response.registers
 
-                        #_LOGGER.info(f"Successfully read registers at address {address}.")
-                        return response.registers
+            except (ModbusIOException, ConnectionException) as e:
+                _LOGGER.error(f"Read attempt {attempt + 1} failed at address {address}: {e}")
+                if attempt < max_retries - 1:
+                    delay = min(base_delay * (2 ** attempt), 10.0)
+                    await asyncio.sleep(delay)
+                    if not await self._safe_close():
+                        _LOGGER.warning("Failed to safely close the Modbus client.")
+                    try:
+                        await self.ensure_connection()
+                    except ConnectionException:
+                        _LOGGER.error("Failed to reconnect Modbus client.")
+                        continue
+                    else:
+                        _LOGGER.info("Reconnected Modbus client successfully.")
 
-                except (ModbusIOException, ConnectionException) as e:
-                        _LOGGER.error(f"Read attempt {attempt + 1} failed at address {address}: {e}")
-
-                        # Exponential backoff for retry
-                        if attempt < max_retries - 1:
-                                await asyncio.sleep(min(base_delay * (2 ** attempt), 10.0))
-
-                                # In case of connection problems, safely close the current connection and rebuild it
-                                if not await self._safe_close():
-                                        _LOGGER.warning("Failed to safely close the Modbus client.")
-                                        
-                                # Ensure reconnection
-                                if not await self.ensure_connection():
-                                        _LOGGER.error("Failed to reconnect Modbus client.")
-                                else:
-                                        _LOGGER.info("Reconnected Modbus client successfully.")
-
-        # If all attempts failed
-        _LOGGER.error(f"Failed to read registers from slave {self._slave}, address {address} after {max_retries} attempts")
+        _LOGGER.error(f"Failed to read registers from unit {unit}, address {address} after {max_retries} attempts")
         raise ConnectionException(f"Read operation failed for address {address} after {max_retries} attempts")
 
     async def _async_update_data(self) -> Dict[str, Any]:
-        """Updates all data records."""
+        await self.ensure_connection()
         if not self.firmware_data:
-                self.firmware_data.update(await self.read_modbus_firmware_data())
-
-        data_read_methods = [
-                self.read_realtime_data_1,
-                self.read_realtime_data_2,
-                self.read_realtime_data_3,
-                self.read_realtime_data_4,
-                self.read_realtime_data_5,
-                self.read_realtime_data_6,
-                self.read_realtime_data_7,
-                self.read_realtime_data_8,
-                self.read_realtime_data_9,
-                self.read_realtime_data_A,
-                self.read_realtime_data_B,
-                self.read_realtime_data_C,
-                self.read_realtime_data_D,
-                self.read_realtime_data_E,
-                self.read_realtime_data_F,
-                self.read_realtime_data_G,
-        ]
-
+            self.firmware_data.update(await self.read_modbus_firmware_data())
         combined_data = {**self.firmware_data}
 
-        for read_method in data_read_methods:
-                combined_data.update(await read_method())
-                await asyncio.sleep(0.2)  # 200ms pause between read operations
-
+        for read_method in [
+            self.read_realtime_data_1,
+            self.read_realtime_data_2,
+            self.read_realtime_data_3,
+            self.read_realtime_data_4,
+            self.read_realtime_data_5,
+            self.read_realtime_data_6,
+            self.read_realtime_data_7,
+            self.read_realtime_data_8,
+            self.read_realtime_data_9,
+            self.read_realtime_data_A,
+            self.read_realtime_data_B,
+            self.read_realtime_data_C,
+            self.read_realtime_data_D,
+            self.read_realtime_data_E,
+            self.read_realtime_data_F,
+            self.read_realtime_data_G,
+        ]:
+            combined_data.update(await read_method())
+            await asyncio.sleep(0.2)
+        await self.close()
         return combined_data
 
     async def _read_modbus_data(
@@ -229,7 +206,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             Dict[str, Any]: Decoded data as a dictionary.
         """
         try:
-            regs = await self.try_read_registers(start_address, count)
+            regs = await self.try_read_registers(self._slave, start_address, count)
             decoder = BinaryPayloadDecoder.fromRegisters(regs, byteorder=Endian.BIG)
             new_data: Dict[str, Any] = {}
 
@@ -265,7 +242,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
     async def read_modbus_firmware_data(self) -> Dict[str, Any]:
         """Reads basic firmware data."""
         try:
-            regs = await self.try_read_registers(0x7, 2)
+            regs = await self.try_read_registers(self._slave, 0x7, 2)
             decoder = BinaryPayloadDecoder.fromRegisters(regs, byteorder=Endian.BIG)
             data = {}
 
@@ -421,7 +398,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         ]
 
         return await self._read_modbus_data(
-            531, 24, decode_instructions_realtime_data9, 'realtime_data9',
+            531, 25, decode_instructions_realtime_data9, 'realtime_data9',
             default_decoder="decode_16bit_int", default_factor=0.1
         )
 
