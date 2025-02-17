@@ -249,14 +249,14 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
                     else:
                         value = raw_value  # Default value if no conversion is necessary
 
-                new_data[key] = round(value * factor, 2) if factor != 1 else value
-                index += 1
+                    new_data[key] = round(value * factor, 2) if factor != 1 else value
+                    index += 1
 
-            except Exception as e:
-                _LOGGER.error(f"Error decoding {key}: {e}")
-                return {}
+                except Exception as e:
+                    _LOGGER.error(f"Error decoding {key}: {e}")
+                    return {}
 
-        return new_data
+            return new_data
 
         except Exception as e:
             _LOGGER.error(f"Error reading modbus data: {e}")
@@ -271,8 +271,9 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             index = 0
 
             # Basic parameters
-            data["firmware"] = self._client.convert_from_registers([regs[index]], ModbusClientMixin.DATATYPE.INT32)
-            index += 2 # 32-bit register = 2 bytes
+            if index + 1 < len(regs):
+                data["firmware"] = self._client.convert_from_registers([regs[index + 1]], ModbusClientMixin.DATATYPE.INT32)
+                index += 1 # 32-bit register = 2 bytes
 
             return data
 
