@@ -334,7 +334,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         """Reads real-time operating data, Modbus 199-218."""
 
         decode_instructions_realtime_data4 = [
-            ("betriebsart_warmwasser", None),
+            ("betriebsart_warmwasser", "decode_16bit_uint", 1),
             ("temperatur_wwspeicher_oben", None),
             ("temperatur_wwspeicher_unten", None),
             (None, "skip_bytes", 2),
