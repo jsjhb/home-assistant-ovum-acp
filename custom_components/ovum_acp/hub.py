@@ -8,8 +8,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadDecoder
+#from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.exceptions import ConnectionException, ModbusIOException
+from pymodbus.client.mixin import ModbusClientMixin
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -207,32 +208,55 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         """
         try:
             regs = await self.try_read_registers(self._slave, start_address, count)
-            decoder = BinaryPayloadDecoder.fromRegisters(regs, byteorder=Endian.BIG)
-            new_data: Dict[str, Any] = {}
+            if not regs:
+                _LOGGER.error(f"Error reading modbus data: No response for {data_key}")
+                return {}
+
+            new_data = {}
+            index = 0
 
             for instruction in decode_instructions:
+                key, method, factor = (instruction + (default_factor,))[:3]
+                method = method or default_decoder 
+
+                if method == "skip_bytes":
+                    index += factor //2 # Each register is 2 bytes long
+                    continue
+
+                if not key:
+                    continue
+
                 try:
-                    key, method, factor = instruction if len(instruction) == 3 else (*instruction, default_factor)
-                    method = method or default_decoder  # Use default decoder if none is specified
+                    raw_value = regs[index]
 
-                    if method == "skip_bytes":
-                        decoder.skip_bytes(factor)
-                        continue
+                    # Selection of the correct decoding method
+                    if method == "decode_16bit_int":
+                        value = self._client.convert_from_registers([raw_value], ModbusClientMixin.DATATYPE.INT16)
+                    elif method == "decode_16bit_uint":
+                        value = self._client.convert_from_registers([raw_value], ModbusClientMixin.DATATYPE.UINT16)
+                    elif method == "decode_32bit_int":
+                        if index + 1 < len(regs):
+                            value = self._client.convert_from_registers([raw_value, regs[index + 1]], ModbusClientMixin.DATATYPE.INT32)
+                            index += 1  # 32-bit values occupy two registers
+                        else:
+                            value = 0
+                    elif method == "decode_32bit_uint":
+                        if index + 1 < len(regs):
+                            value = self._client.convert_from_registers([raw_value, regs[index + 1]], ModbusClientMixin.DATATYPE.UINT32)
+                            index += 1  # 32-bit values occupy two registers
+                        else:
+                            value = 0
+                    else:
+                        value = raw_value  # Default value if no conversion is necessary
 
-                    if not key:
-                        continue
+                new_data[key] = round(value * factor, 2) if factor != 1 else value
+                index += 1
 
-                    value = getattr(decoder, method)()
-                    if isinstance(value, bytes):
-                        value = value.decode("ascii", errors="replace").strip()
-                    
-                    new_data[key] = round(value * factor, 2) if factor != 1 else value
+            except Exception as e:
+                _LOGGER.error(f"Error decoding {key}: {e}")
+                return {}
 
-                except Exception as e:
-                    _LOGGER.error(f"Error decoding {key}: {e}")
-                    return {}
-
-            return new_data
+        return new_data
 
         except Exception as e:
             _LOGGER.error(f"Error reading modbus data: {e}")
@@ -243,11 +267,12 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         """Reads basic firmware data."""
         try:
             regs = await self.try_read_registers(self._slave, 0x7, 2)
-            decoder = BinaryPayloadDecoder.fromRegisters(regs, byteorder=Endian.BIG)
             data = {}
+            index = 0
 
             # Basic parameters
-            data["firmware"] = decoder.decode_32bit_int()
+            data["firmware"] = self._client.convert_from_registers([regs[index]], ModbusClientMixin.DATATYPE.INT32)
+            index += 2 # 32-bit register = 2 bytes
 
             return data
 
