@@ -272,7 +272,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
             # Basic parameters
             if index + 1 < len(regs):
-                data["firmware"] = self._client.convert_from_registers([regs[index + 1]], ModbusClientMixin.DATATYPE.INT32)
+                data["firmware"] = self._client.convert_from_registers([regs[index], regs[index + 1]], ModbusClientMixin.DATATYPE.INT32)
                 index += 1 # 32-bit register = 2 bytes
 
             return data
