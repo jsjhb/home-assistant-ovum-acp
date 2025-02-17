@@ -305,7 +305,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         """Reads real-time operating data, Modbus 78-88."""
 
         decode_instructions_realtime_data2 = [
-            ("waermeleistung", "decode_16bit_uint", 0.01),
+            ("waermeleistung", "decode_16bit_uint", 10),
             (None, "skip_bytes", 18),
             ("betriebsstuden_kompressor", None),
         ]
@@ -382,7 +382,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         decode_instructions_realtime_data7 = [
             ("autarkiegrad_ueberschussbetrieb", None),
             (None, "skip_bytes", 10),
-            ("pv_watch_messwert", "decode_16bit_int", 0.01),
+            ("pv_watch_messwert", "decode_16bit_int", 10),
         ]
 
         return await self._read_modbus_data(
@@ -432,7 +432,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
         decode_instructions_realtime_dataA = [
             ("betriebsart_hk1", None),
-            ("betriebsart_hk1", None),
+            ("betriebsart_hk2", None),
         ]
 
         return await self._read_modbus_data(
@@ -449,10 +449,10 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             ("sollwertanhebung_ww_pvplus", None),
             ("sollwertanhebung_heizung_pvplus", None),
             (None, "skip_bytes", 6),
-            ("el_leistung_wp", "decode_16bit_uint", 0.01),
+            ("el_leistung_wp", "decode_16bit_uint", 10),
             ("pvplus_regelungsart", None),
-            ("sollwert_pvwatch_tcp", "decode_16bit_int", 0.01),
-            ("sollwert_leistungsaufnahme_tcp", "decode_16bit_uint", 0.01),
+            ("sollwert_pvwatch_tcp", "decode_16bit_int", 10),
+            ("sollwert_leistungsaufnahme_tcp", "decode_16bit_uint", 10),
         ]
 
         return await self._read_modbus_data(
