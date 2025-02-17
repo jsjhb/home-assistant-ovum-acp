@@ -58,6 +58,20 @@ information_sensors_group = SensorGroup(
     icon="mdi:information-outline"  
 )
 
+duration_minutes_sensors_group = SensorGroup(
+    unit_of_measurement=UnitOfTime.MINUTES,
+    device_class=SensorDeviceClass.DURATION,
+    state_class=SensorStateClass.MEASUREMENT,
+    icon="mdi:clock",
+)
+
+duration_hours_sensors_group = SensorGroup(
+    unit_of_measurement=UnitOfTime.HOURS,
+    device_class=SensorDeviceClass.DURATION,
+    state_class=SensorStateClass.MEASUREMENT,
+    icon="mdi:clock",
+)
+
 def create_sensor_descriptions(group: SensorGroup, sensors: list) -> dict:
     descriptions = {}
     for sensor in sensors:
@@ -93,23 +107,23 @@ power_sensors = [
 ]
 
 temperature_sensors = [
-    {"name": "waermepumpenaustritt", "key": "waermepumpenaustritt", "icon": "transmission-tower"},
-    {"name": "waermepumpeneintritt", "key": "waermepumpeneintritt", "icon": "transmission-tower"},
-    {"name": "temperatur_wwspeicher_oben", "key": "temperatur_wwspeicher_oben", "icon": "transmission-tower"},
-    {"name": "temperatur_wwspeicher_unten", "key": "temperatur_wwspeicher_unten", "icon": "transmission-tower"},
-    {"name": "temperatur_zapf_fws", "key": "temperatur_zapf_fws", "icon": "transmission-tower"},
-    {"name": "temperatur_ww_soll", "key": "temperatur_ww_soll", "icon": "transmission-tower"},
-    {"name": "temperatur_zapf_soll", "key": "temperatur_zapf_soll", "icon": "transmission-tower"},
-    {"name": "vorlauftemperatur_hk1", "key": "vorlauftemperatur_hk1", "icon": "transmission-tower"},
-    {"name": "ruecklauftemperatur_hk1", "key": "ruecklauftemperatur_hk1", "icon": "transmission-tower"},
-    {"name": "temperatur_speicher", "key": "temperatur_speicher", "icon": "transmission-tower"},
-    {"name": "aussentemperatur_gemittelt", "key": "aussentemperatur_gemittelt", "icon": "transmission-tower"},
-    {"name": "raumsolltemperatur_hk1", "key": "raumsolltemperatur_hk1", "icon": "transmission-tower"},
-    {"name": "vorlauftemperatur_hk2", "key": "vorlauftemperatur_hk2", "icon": "transmission-tower"},
-    {"name": "vorlaufsolltemperatur_hk2", "key": "vorlaufsolltemperatur_hk2", "icon": "transmission-tower"},
-    {"name": "raumsolltemperatur_hk2", "key": "raumsolltemperatur_hk2", "icon": "transmission-tower"},
-    {"name": "vorlaufsolltemperatur_hk1", "key": "vorlaufsolltemperatur_hk1", "icon": "transmission-tower"},
-    {"name": "speichersolltemperatur_pvplus_betrieb", "key": "speichersolltemperatur_pvplus_betrieb", "icon": "transmission-tower"},
+    {"name": "waermepumpenaustritt", "key": "waermepumpenaustritt", "icon": "thermometer"},
+    {"name": "waermepumpeneintritt", "key": "waermepumpeneintritt", "icon": "thermometer"},
+    {"name": "temperatur_wwspeicher_oben", "key": "temperatur_wwspeicher_oben", "icon": "thermometer"},
+    {"name": "temperatur_wwspeicher_unten", "key": "temperatur_wwspeicher_unten", "icon": "thermometer"},
+    {"name": "temperatur_zapf_fws", "key": "temperatur_zapf_fws", "icon": "thermometer"},
+    {"name": "temperatur_ww_soll", "key": "temperatur_ww_soll", "icon": "thermometer"},
+    {"name": "temperatur_zapf_soll", "key": "temperatur_zapf_soll", "icon": "thermometer"},
+    {"name": "vorlauftemperatur_hk1", "key": "vorlauftemperatur_hk1", "icon": "thermometer"},
+    {"name": "ruecklauftemperatur_hk1", "key": "ruecklauftemperatur_hk1", "icon": "thermometer"},
+    {"name": "temperatur_speicher", "key": "temperatur_speicher", "icon": "thermometer"},
+    {"name": "aussentemperatur_gemittelt", "key": "aussentemperatur_gemittelt", "icon": "thermometer"},
+    {"name": "raumsolltemperatur_hk1", "key": "raumsolltemperatur_hk1", "icon": "thermometer"},
+    {"name": "vorlauftemperatur_hk2", "key": "vorlauftemperatur_hk2", "icon": "thermometer"},
+    {"name": "vorlaufsolltemperatur_hk2", "key": "vorlaufsolltemperatur_hk2", "icon": "thermometer"},
+    {"name": "raumsolltemperatur_hk2", "key": "raumsolltemperatur_hk2", "icon": "thermometer"},
+    {"name": "vorlaufsolltemperatur_hk1", "key": "vorlaufsolltemperatur_hk1", "icon": "thermometer"},
+    {"name": "speichersolltemperatur_pvplus_betrieb", "key": "speichersolltemperatur_pvplus_betrieb", "icon": "thermometer"},
 ]
 
 information_sensors = [
@@ -118,11 +132,9 @@ information_sensors = [
     {"name": "stufe2b", "key": "stufe2b", "icon": "information-outline"},
     {"name": "kuehlventil", "key": "kuehlventil", "icon": "information-outline"},
     {"name": "stufe2a", "key": "stufe2a", "icon": "information-outline"},
-    {"name": "betriebsstuden_kompressor", "key": "betriebsstuden_kompressor", "icon": "information-outline"},
-    {"name": "laufzeit_seit_letztem_start", "key": "laufzeit_seit_letztem_start", "icon": "information-outline"},
     {"name": "betriebsart_warmwasser", "key": "betriebsart_warmwasser", "icon": "information-outline"},
     {"name": "status_kombiausgang_pupu", "key": "status_kombiausgang_pupu", "icon": "information-outline"},
-    {"name": "anzahl_aktive_alarme", "key": "anzahl_aktive_alarme", "icon": "information-outline"},
+    {"name": "anzahl_aktive_alarme", "key": "anzahl_aktive_alarme", "icon": "counter"},
     {"name": "max_neustarts_erreicht", "key": "max_neustarts_erreicht", "icon": "information-outline"},
     {"name": "autarkiegrad_ueberschussbetrieb", "key": "autarkiegrad_ueberschussbetrieb", "icon": "information-outline"},
     {"name": "betriebsart_heizung", "key": "betriebsart_heizung", "icon": "information-outline"},
@@ -141,10 +153,20 @@ information_sensors = [
     {"name": "wp_status", "key": "wp_status", "icon": "information-outline"},
 ]
 
+duration_minutes_sensors = [
+    {"name": "laufzeit_seit_letztem_start", "key": "laufzeit_seit_letztem_start"},
+]
+
+duration_hours_sensors = [
+    {"name": "betriebsstuden_kompressor", "key": "betriebsstuden_kompressor"},
+]
+
 SENSOR_TYPES = {
     **create_sensor_descriptions(power_sensors_group, power_sensors),
     **create_sensor_descriptions(temperature_sensors_group, temperature_sensors),
     **create_sensor_descriptions(information_sensors_group, information_sensors),
+    **create_sensor_descriptions(duration_minutes_sensors_group, duration_minutes_sensors),
+    **create_sensor_descriptions(duration_hours_sensors_group, duration_hours_sensors),
    
 }
 
