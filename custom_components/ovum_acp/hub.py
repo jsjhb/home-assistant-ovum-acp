@@ -357,7 +357,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
         data["betriebsart_warmwasser"] = BETRIEBSART_MODI.get(data.get("betriebsart_warmwasser_num"), "Unknown")
 
-	return data
+        return data
 
     async def read_realtime_data_5(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 249."""
