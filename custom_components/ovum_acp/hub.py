@@ -12,6 +12,8 @@ from pymodbus.constants import Endian
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.client.mixin import ModbusClientMixin
 
+from .const import BETRIEBSART_MODI, BETRIEBSART_HK, KAELTEKREIS_MODI, PUPU_MODI, PV_UEBERSCHUSSREGELUNG, SGREADY_MODUS, SOLLWERTANHEBUNG_PVPLUS, WP_STATUS
+
 _LOGGER = logging.getLogger(__name__)
 
 class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
@@ -285,7 +287,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         """Reads real-time operating data, Modbus 29-37."""
 
         decode_instructions_realtime_data1 = [
-            ("pumpe_hk1", None),
+            ("pumpe_hk1_num", None),
             (None, "skip_bytes", 4),
             ("kombiausgang_pupu", None),
             (None, "skip_bytes", 2),
@@ -298,6 +300,8 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             29, 8, decode_instructions_realtime_data1, 'realtime_data1',
             default_decoder="decode_16bit_uint", default_factor=1
         )
+
+        data["pumpe_hk1"] = BETRIEBSART_MODI.get(data.get("pumpe_hk1_num"), "Unknown")
 
         return data
 
@@ -335,33 +339,41 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         """Reads real-time operating data, Modbus 199-218."""
 
         decode_instructions_realtime_data4 = [
-            ("betriebsart_warmwasser", "decode_16bit_uint", 1),
+            ("betriebsart_warmwasser_num", "decode_16bit_uint", 1),
             ("temperatur_wwspeicher_oben", None),
             ("temperatur_wwspeicher_unten", None),
-            (None, "skip_bytes", 2),
             ("temperatur_zapf_fws", None),
+            ("pumpe_fws_ausgang", "decode_16bit_uint", 0.01),
             (None, "skip_bytes", 22),
             ("temperatur_ww_soll", None),
             (None, "skip_bytes", 4),
             ("temperatur_zapf_soll", None),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             199, 20, decode_instructions_realtime_data4, 'realtime_data4',
             default_decoder="decode_16bit_int", default_factor=0.1
         )
+
+        data["betriebsart_warmwasser"] = BETRIEBSART_MODI.get(data.get("betriebsart_warmwasser_num"), "Unknown")
+
+	return data
 
     async def read_realtime_data_5(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 249."""
 
         decode_instructions_realtime_data5 = [
-            ("status_kombiausgang_pupu", None),
+            ("status_kombiausgang_pupu_num", None),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             249, 1, decode_instructions_realtime_data5, 'realtime_data5',
             default_decoder="decode_16bit_uint", default_factor=1
         )
+
+        data["status_kombiausgang_pupu"] = BETRIEBSART_MODI.get(data.get("status_kombiausgang_pupu_num"), "Unknown")
+
+        return data
 
     async def read_realtime_data_6(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 352-355."""
@@ -395,7 +407,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         """Reads real-time operating data, Modbus 499-523."""
 
         decode_instructions_realtime_data8 = [
-            ("betriebsart_heizung", "decode_16bit_uint", 1),
+            ("betriebsart_heizung_num", "decode_16bit_uint", 1),
             (None, "skip_bytes", 4),
             ("vorlauftemperatur_hk1", None),
             ("ruecklauftemperatur_hk1", None),
@@ -405,16 +417,20 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             ("raumsolltemperatur_hk1", None),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             499, 25, decode_instructions_realtime_data8, 'realtime_data8',
             default_decoder="decode_16bit_int", default_factor=0.1
         )
+
+        data["betriebsart_heizung"] = BETRIEBSART_MODI.get(data.get("betriebsart_heizung_num"), "Unknown")
+
+        return data
 
     async def read_realtime_data_9(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 531-554."""
 
         decode_instructions_realtime_data9 = [
-            ("kombiausgang_pupu_modi", "decode_16bit_uint", 1),
+            ("kombiausgang_pupu_modi_num", "decode_16bit_uint", 1),
             (None, "skip_bytes", 4),
             ("vorlauftemperatur_hk2", None),
             ("vorlaufsolltemperatur_hk2", None),
@@ -423,23 +439,32 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             ("vorlaufsolltemperatur_hk1", None),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             531, 25, decode_instructions_realtime_data9, 'realtime_data9',
             default_decoder="decode_16bit_int", default_factor=0.1
         )
+
+        data["kombiausgang_pupu_modi"] = PUPU_MODI.get(data.get("kombiausgang_pupu_modi_num"), "Unknown")
+
+        return data
 
     async def read_realtime_data_A(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 640-641."""
 
         decode_instructions_realtime_dataA = [
-            ("betriebsart_hk1", None),
-            ("betriebsart_hk2", None),
+            ("betriebsart_hk1_num", None),
+            ("betriebsart_hk2_num", None),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             640, 2, decode_instructions_realtime_dataA, 'realtime_dataA',
             default_decoder="decode_16bit_uint", default_factor=1
         )
+
+        data["betriebsart_hk1"] = BETRIEBSART_HK.get(data.get("betriebsart_hk1_num"), "Unknown")
+        data["betriebsart_hk2"] = BETRIEBSART_HK.get(data.get("betriebsart_hk2_num"), "Unknown")
+
+        return data
 
     async def read_realtime_data_B(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 699-710."""
@@ -448,18 +473,23 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             ("speichersolltemperatur_pvplus_betrieb", "decode_16bit_uint", 0.1),
             (None, "skip_bytes", 4),
             ("sollwertanhebung_ww_pvplus", None),
-            ("sollwertanhebung_heizung_pvplus", None),
+            ("sollwertanhebung_heizung_pvplus_num", None),
             (None, "skip_bytes", 6),
             ("el_leistung_wp", "decode_16bit_uint", 10),
-            ("pvplus_regelungsart", None),
+            ("pvplus_regelungsart_num", None),
             ("sollwert_pvwatch_tcp", "decode_16bit_int", 10),
             ("sollwert_leistungsaufnahme_tcp", "decode_16bit_uint", 10),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             699, 12, decode_instructions_realtime_dataB, 'realtime_dataB',
             default_decoder="decode_16bit_uint", default_factor=1
         )
+
+        data["sollwertanhebung_heizung_pvplus"] = SOLLWERTANHEBUNG_PVPLUS.get(data.get("sollwertanhebung_heizung_pvplus_num"), "Unknown")
+        data["pvplus_regelungsart"] = PV_UEBERSCHUSSREGELUNG.get(data.get("pvplus_regelungsart_num"), "Unknown")
+
+        return data
 
     async def read_realtime_data_C(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 749."""
@@ -489,37 +519,49 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         """Reads real-time operating data, Modbus 1204."""
 
         decode_instructions_realtime_dataE = [
-            ("anforderungsart_kaeltekreis", None),
+            ("anforderungsart_kaeltekreis_num", None),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             1204, 1, decode_instructions_realtime_dataE, 'realtime_dataE',
             default_decoder="decode_16bit_uint", default_factor=1
         )
+
+        data["anforderungsart_kaeltekreis"] = KAELTEKREIS_MODI.get(data.get("anforderungsart_kaeltekreis_num"), "Unknown")
+
+        return data
 
     async def read_realtime_data_F(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 1249-1251."""
 
         decode_instructions_realtime_dataF = [
-            ("sg_ready_modus", None),
+            ("sg_ready_modus_num", None),
             ("sg_ready_kontakt1", None),
             ("sg_ready_kontakt2", None),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             1249, 3, decode_instructions_realtime_dataF, 'realtime_dataF',
             default_decoder="decode_16bit_uint", default_factor=1
         )
+
+        data["sg_ready_modus"] = SGREADY_MODUS.get(data.get("sg_ready_modus_num"), "Unknown")
+
+        return data
 
     async def read_realtime_data_G(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 1999."""
 
         decode_instructions_realtime_dataG = [
-            ("wp_status", None),
+            ("wp_status_num", None),
         ]
 
-        return await self._read_modbus_data(
+        data = await self._read_modbus_data(
             1999, 1, decode_instructions_realtime_dataG, 'realtime_dataG',
             default_decoder="decode_16bit_uint", default_factor=1
         )
+
+        data["wp_status"] = WP_STATUS.get(data.get("wp_status_num"), "Unknown")
+
+        return data
 
