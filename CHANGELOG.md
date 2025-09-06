@@ -1,3 +1,12 @@
+Changelog for home-assistant-ovum-acp 0.3.1 (2025-09-06)
+========================================================
+
+Summary
+-------
+
+* rename MODBUS parameter slave to deviceid for pymodbus 3.10 compatibility
+
+
 Changelog for home-assistant-ovum-acp 0.3.0 (2025-04-13)
 ========================================================
 

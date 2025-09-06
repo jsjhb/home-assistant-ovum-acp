@@ -7,7 +7,7 @@
           "host": "IP-Adresse der WP-Steuerung oder EPoCA",
           "name": "Präfix für die Sensoren dieses Geräts",
           "port": "Modbus TCP-Port, auf den die Steuerung konfiguriert ist",
-          "slave": "Modbus Unit ID, auf die die Steuerung konfiguriert ist",
+          "deviceid": "Modbus Unit ID, auf die die Steuerung konfiguriert ist",
           "scan_interval": "Abfrageintervall in Sekunden"
         }
       }

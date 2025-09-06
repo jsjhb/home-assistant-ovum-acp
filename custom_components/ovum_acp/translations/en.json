@@ -7,7 +7,7 @@
           "host": "IP address heat pump controller or EPoCA",
           "name": "prefix of sensors of this device",
           "port": "Modbus TCP port of listening device",
-          "slave": "Modbus unit ID of listening device",
+          "deviceid": "Modbus unit ID of listening device",
           "scan_interval": "polling interval in seconds"
         }
       }

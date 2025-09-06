@@ -2,7 +2,7 @@
 import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SLAVE, CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_DEVICE_ID, CONF_SCAN_INTERVAL
 
 from .hub import OvumModbusHub
 from .const import DOMAIN, ATTR_MANUFACTURER, DEFAULT_SCAN_INTERVAL
@@ -52,7 +52,7 @@ async def _create_hub(hass: HomeAssistant, entry: ConfigEntry) -> OvumModbusHub:
             entry.data[CONF_NAME],
             entry.data[CONF_HOST],
             entry.data[CONF_PORT],
-            entry.data[CONF_SLAVE],
+            entry.data[CONF_DEVICE_ID],
             entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         )
         await hub.async_config_entry_first_refresh()

@@ -2,11 +2,11 @@ import ipaddress
 import re
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_SLAVE, CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_DEVICE_ID, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, callback
 import logging
 
-from .const import DEFAULT_NAME, DEFAULT_PORT, DEFAULT_SLAVE, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import DEFAULT_NAME, DEFAULT_PORT, DEFAULT_DEVICE_ID, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .hub import OvumModbusHub
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): str,
     vol.Required(CONF_HOST): str,
     vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
-    vol.Required(CONF_SLAVE, default=DEFAULT_SLAVE): int,
+    vol.Required(CONF_DEVICE_ID, default=DEFAULT_DEVICE_ID): int,
     vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
 })
 
@@ -95,7 +95,7 @@ class OvumModbusOptionsFlowHandler(config_entries.OptionsFlow):
                     return self.async_abort(reason="hub_not_found")
 
                 # Update the hub configuration
-                await hub.update_connection_settings(user_input[CONF_HOST], user_input[CONF_PORT], user_input[CONF_SLAVE], user_input[CONF_SCAN_INTERVAL])
+                await hub.update_connection_settings(user_input[CONF_HOST], user_input[CONF_PORT], user_input[CONF_DEVICE_ID], user_input[CONF_SCAN_INTERVAL])
 
                 # Save the new options in the configuration entry
                 self.hass.config_entries.async_update_entry(
@@ -114,7 +114,7 @@ class OvumModbusOptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema({
                 vol.Required(CONF_HOST, default=self.config_entry.data.get(CONF_HOST, '')): str,
                 vol.Required(CONF_PORT, default=self.config_entry.data.get(CONF_PORT, 502)): int,
-                vol.Required(CONF_SLAVE, default=self.config_entry.data.get(CONF_SLAVE, 247)): int,
+                vol.Required(CONF_DEVICE_ID, default=self.config_entry.data.get(CONF_DEVICE_ID, 247)): int,
                 vol.Optional(CONF_SCAN_INTERVAL, default=self.config_entry.data.get(CONF_SCAN_INTERVAL, 30)): int,
             }),
         )
