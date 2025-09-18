@@ -12,7 +12,7 @@ Implements reading modbus registers published in [OVUM's documentation page](htt
 
 ## Installation
 
-This integration can be installed using a custom repository in HACS. Add the repository https://github.com/jsjhb/home-assisitant-ovum-acp to HACS and search for "OVUM ACP", click it and click "Download". Don't forget to restart Home-Assistant. After restart, this integration can be configured through the integration setup UI.
+This integration can be installed using a custom repository in HACS. Add the repository https://github.com/jsjhb/home-assistant-ovum-acp to HACS and search for "OVUM ACP", click it and click "Download". Don't forget to restart Home-Assistant. After restart, this integration can be configured through the integration setup UI.
 
 ## Configuration
 
