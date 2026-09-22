@@ -433,7 +433,10 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             ("vorlauftemperatur_hk2", None),
             ("vorlaufsolltemperatur_hk2", None),
             ("raumsolltemperatur_hk2", None),
-            (None, "skip_bytes", 36),
+            # Documentation register 555 sits on wire address 554, which is
+            # index 23 of this block. Skipping 36 bytes landed on index 24
+            # (documentation 556) and returned a constant 3.0 - see issue #3.
+            (None, "skip_bytes", 34),
             ("vorlaufsolltemperatur_hk1", None),
         ]
 
