@@ -1,3 +1,14 @@
+Changelog for home-assistant-ovum-acp 0.3.3 (2026-09-27)
+========================================================
+
+Summary
+-------
+
+* selectively request registes 1050, 1350 and 1351 (added in 0.3.2)
+  only on firmware levels above 240626
+* add firmware level as sensor in HA
+
+
 Changelog for home-assistant-ovum-acp 0.3.2 (2026-09-27)
 ========================================================
 
