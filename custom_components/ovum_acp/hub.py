@@ -179,8 +179,10 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             self.read_realtime_data_G,
             self.read_realtime_data_H,
             self.read_realtime_data_I,
-            self.read_realtime_data_J,
-            self.read_realtime_data_K,
+	    # read registers 599, 1050, 1350, 1351 only on newer versions of firmware
+	    if self.firmware_data > 240626:
+                self.read_realtime_data_J,
+                self.read_realtime_data_K,
         ]:
             combined_data.update(await read_method())
             await asyncio.sleep(0.2)

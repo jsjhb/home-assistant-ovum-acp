@@ -137,6 +137,7 @@ temperature_sensors = [
 ]
 
 information_sensors = [
+    {"name": "Firmware", "key": "firmware_data", "icon": "information-outline"},
     {"name": "HK1 Pumpe num", "key": "pumpe_hk1_num", "icon": "information-outline", "enable": False},
     {"name": "HK1 Pumpe", "key": "pumpe_hk1", "icon": "information-outline"},
     {"name": "kombiausgang_pupu", "key": "kombiausgang_pupu", "icon": "information-outline"},
