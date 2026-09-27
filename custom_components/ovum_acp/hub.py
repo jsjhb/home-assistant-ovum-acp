@@ -10,7 +10,7 @@ from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.client.mixin import ModbusClientMixin
 
-from .const import BETRIEBSART_MODI, BETRIEBSART_HK, KAELTEKREIS_MODI, PUPU_MODI, PV_UEBERSCHUSSREGELUNG, SGREADY_MODUS, SOLLWERTANHEBUNG_PVPLUS, WP_STATUS
+from .const import BETRIEBSART_MODBUS, BETRIEBSART_MODI, BETRIEBSART_HK, EXTERNER_SOLLWERT, KAELTEKREIS_MODI, PUPU_MODI, PV_UEBERSCHUSSREGELUNG, SGREADY_MODUS, SOLLWERTANHEBUNG_PVPLUS, WP_STATUS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -177,6 +177,10 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             self.read_realtime_data_E,
             self.read_realtime_data_F,
             self.read_realtime_data_G,
+            self.read_realtime_data_H,
+            self.read_realtime_data_I,
+            self.read_realtime_data_J,
+            self.read_realtime_data_K,
         ]:
             combined_data.update(await read_method())
             await asyncio.sleep(0.2)
@@ -433,7 +437,10 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             ("vorlauftemperatur_hk2", None),
             ("vorlaufsolltemperatur_hk2", None),
             ("raumsolltemperatur_hk2", None),
-            (None, "skip_bytes", 36),
+            # Documentation register 555 sits on wire address 554, which is
+            # index 23 of this block. Skipping 36 bytes landed on index 24
+            # (documentation 556) and returned a constant 3.0 - see issue #3.
+            (None, "skip_bytes", 34),
             ("vorlaufsolltemperatur_hk1", None),
         ]
 
@@ -560,6 +567,67 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         )
 
         data["wp_status"] = WP_STATUS.get(data.get("wp_status_num"), "Unknown")
+
+        return data
+
+    async def read_realtime_data_H(self) -> Dict[str, Any]:
+        """Reads real-time operating data, Modbus 5."""
+
+        decode_instructions_realtime_dataH = [
+            ("betriebsmeldung", None),
+        ]
+
+        return await self._read_modbus_data(
+            4, 1, decode_instructions_realtime_dataH, 'realtime_dataH',
+            default_decoder="decode_16bit_uint", default_factor=1
+        )
+
+    async def read_realtime_data_I(self) -> Dict[str, Any]:
+        """Reads real-time operating data, Modbus 599-600.
+
+        Part of the external setpoint block documented from software
+        version 241122 onwards.
+        """
+
+        decode_instructions_realtime_dataI = [
+            ("externe_ruecklaufsolltemperatur_heizen_hk1", "decode_16bit_int", 0.1),
+            ("externe_vorlaufsolltemperatur_hk1_freigabe", "decode_16bit_uint", 1),
+        ]
+
+        return await self._read_modbus_data(
+            598, 2, decode_instructions_realtime_dataI, 'realtime_dataI',
+            default_decoder="decode_16bit_int", default_factor=0.1
+        )
+
+    async def read_realtime_data_J(self) -> Dict[str, Any]:
+        """Reads real-time operating data, Modbus 1050."""
+
+        decode_instructions_realtime_dataJ = [
+            ("externe_vorlaufsolltemperatur_kuehlen_hk1", "decode_16bit_int", 0.1),
+        ]
+
+        return await self._read_modbus_data(
+            1049, 1, decode_instructions_realtime_dataJ, 'realtime_dataJ',
+            default_decoder="decode_16bit_int", default_factor=0.1
+        )
+
+    async def read_realtime_data_K(self) -> Dict[str, Any]:
+        """Reads real-time operating data, Modbus 1350-1351."""
+
+        decode_instructions_realtime_dataK = [
+            ("vorgabe_quelle_externer_sollwert_num", None),
+            ("vorgabe_betriebsart_modbus_num", None),
+        ]
+
+        data = await self._read_modbus_data(
+            1349, 2, decode_instructions_realtime_dataK, 'realtime_dataK',
+            default_decoder="decode_16bit_uint", default_factor=1
+        )
+
+        data["vorgabe_quelle_externer_sollwert"] = EXTERNER_SOLLWERT.get(
+            data.get("vorgabe_quelle_externer_sollwert_num"), "Unknown")
+        data["vorgabe_betriebsart_modbus"] = BETRIEBSART_MODBUS.get(
+            data.get("vorgabe_betriebsart_modbus_num"), "Unknown")
 
         return data
 

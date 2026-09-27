@@ -131,6 +131,8 @@ temperature_sensors = [
     {"name": "HK2 Temp Raum soll", "key": "raumsolltemperatur_hk2", "icon": "thermometer", "enable": False},
     {"name": "HK1 Temp Vorlauf soll", "key": "vorlaufsolltemperatur_hk1", "icon": "thermometer"},
     {"name": "CUBE Temp Speicher soll PV+", "key": "speichersolltemperatur_pvplus_betrieb", "icon": "thermometer"},
+    {"name": "HK1 Temp Rücklauf soll extern", "key": "externe_ruecklaufsolltemperatur_heizen_hk1", "icon": "thermometer"},
+    {"name": "HK1 Temp Vorlauf soll Kühlen extern", "key": "externe_vorlaufsolltemperatur_kuehlen_hk1", "icon": "thermometer", "enable": False},
 ]
 
 information_sensors = [
@@ -170,6 +172,12 @@ information_sensors = [
     {"name": "SG Ready Kontakt2", "key": "sg_ready_kontakt2", "icon": "information-outline"},
     {"name": "WP Status num", "key": "wp_status_num", "icon": "information-outline", "enable": False},
     {"name": "WP Status", "key": "wp_status", "icon": "information-outline"},
+    {"name": "Betriebsmeldung", "key": "betriebsmeldung", "icon": "information-outline"},
+    {"name": "HK1 externe Vorlaufsollwertvorgabe", "key": "externe_vorlaufsolltemperatur_hk1_freigabe", "icon": "information-outline"},
+    {"name": "Vorgabe Quelle externer Sollwert num", "key": "vorgabe_quelle_externer_sollwert_num", "icon": "information-outline", "enable": False},
+    {"name": "Vorgabe Quelle externer Sollwert", "key": "vorgabe_quelle_externer_sollwert", "icon": "information-outline"},
+    {"name": "Vorgabe Betriebsart Modbus num", "key": "vorgabe_betriebsart_modbus_num", "icon": "information-outline", "enable": False},
+    {"name": "Vorgabe Betriebsart Modbus", "key": "vorgabe_betriebsart_modbus", "icon": "information-outline"},
 ]
 
 information_percentage_sensors = [
@@ -244,6 +252,17 @@ SOLLWERTANHEBUNG_PVPLUS = {
     1: "Heizkreis",
     2: "Speicher",
     3: "Heizkreis und Speicher",
+}
+
+EXTERNER_SOLLWERT = {
+    0: "kein externer Sollwert",
+    1: "ModBus",
+}
+
+BETRIEBSART_MODBUS = {
+    0: "Aus",
+    1: "Heizen",
+    2: "Kühlen",
 }
 
 WP_STATUS = {
