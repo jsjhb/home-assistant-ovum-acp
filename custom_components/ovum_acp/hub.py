@@ -429,7 +429,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         return data
 
     async def read_realtime_data_9(self) -> Dict[str, Any]:
-        """Reads real-time operating data, Modbus 531-554."""
+        """Reads real-time operating data, Modbus 528-554."""
 
         decode_instructions_realtime_data9 = [
             ("kombiausgang_pupu_modi_num", "decode_16bit_uint", 1),
@@ -437,15 +437,13 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             ("vorlauftemperatur_hk2", None),
             ("vorlaufsolltemperatur_hk2", None),
             ("raumsolltemperatur_hk2", None),
-            # Documentation register 555 sits on wire address 554, which is
-            # index 23 of this block. Skipping 36 bytes landed on index 24
-            # (documentation 556) and returned a constant 3.0 - see issue #3.
-            (None, "skip_bytes", 34),
+            (None, "skip_bytes", 40),
             ("vorlaufsolltemperatur_hk1", None),
+            ("vorlaufsolltemperaturdiff_hk1", None),
         ]
 
         data = await self._read_modbus_data(
-            531, 25, decode_instructions_realtime_data9, 'realtime_data9',
+            528, 28, decode_instructions_realtime_data9, 'realtime_data9',
             default_decoder="decode_16bit_int", default_factor=0.1
         )
 

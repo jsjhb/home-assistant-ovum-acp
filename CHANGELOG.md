@@ -1,3 +1,37 @@
+Changelog for home-assistant-ovum-acp 0.3.2 (2026-09-27)
+========================================================
+
+Summary
+-------
+
+* fix vorlaufsolltemperatur_hk1 off-by-one (fixes #3)
+* add additional registers documented in later published documentation
+
+Details
+-------
+
+Reading of register block 529-554 was errorneously shiftet in the wrong
+direction. The documentation uses base-1 register numbering, whilst coding
+uses base 0. The former implementation used "base 2", and just by chance
+got the register for "VL SollDiff.". This fixed reading of
+"kombiausgang_pupu_modi", and HK2-related values.
+
+In a later surfaced version of the MODBUS register list for software
+versions starting from "2401122-24/-23" (footer gives version 20250527),
+additional 4 registers are published, intended for controlling the heat
+pump via MODBUS writing. Writing is not implemented yet, values are read
+for now.
+In the newer publication there are still obvious errors, and
+additional - perhaps misleading - statements for certain registers
+regarding the fresh water system. Use with caution!
+
+Acknoledgements
+---------------
+
+Thanks to user @weltmaister for identification, test and fixing of
+issue #3!
+
+
 Changelog for home-assistant-ovum-acp 0.3.1 (2025-09-06)
 ========================================================
 
