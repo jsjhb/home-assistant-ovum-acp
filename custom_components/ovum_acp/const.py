@@ -130,6 +130,7 @@ temperature_sensors = [
     {"name": "HK2 Temp Vorlauf soll", "key": "vorlaufsolltemperatur_hk2", "icon": "thermometer", "enable": False},
     {"name": "HK2 Temp Raum soll", "key": "raumsolltemperatur_hk2", "icon": "thermometer", "enable": False},
     {"name": "HK1 Temp Vorlauf soll", "key": "vorlaufsolltemperatur_hk1", "icon": "thermometer"},
+    {"name": "HK1 Temp Vorlauf solldiff", "key": "vorlaufsolltemperaturdiff_hk1", "icon": "thermometer", "enable": False},
     {"name": "CUBE Temp Speicher soll PV+", "key": "speichersolltemperatur_pvplus_betrieb", "icon": "thermometer"},
     {"name": "HK1 Temp Rücklauf soll extern", "key": "externe_ruecklaufsolltemperatur_heizen_hk1", "icon": "thermometer"},
     {"name": "HK1 Temp Vorlauf soll Kühlen extern", "key": "externe_vorlaufsolltemperatur_kuehlen_hk1", "icon": "thermometer", "enable": False},
@@ -202,6 +203,12 @@ SENSOR_TYPES = {
    
 }
 
+BETRIEBSART_MODBUS = {
+    0: "Aus",
+    1: "Heizen",
+    2: "Kühlen",
+}
+
 BETRIEBSART_MODI = {
     0: "Aus",
     1: "Ein",
@@ -215,6 +222,11 @@ BETRIEBSART_HK = {
     1: "Heizen",
     2: "Kühlen",
     3: "Heizen&Kühlen",
+}
+
+EXTERNER_SOLLWERT = {
+    0: "kein externer Sollwert",
+    1: "ModBus",
 }
 
 KAELTEKREIS_MODI = {
@@ -252,17 +264,6 @@ SOLLWERTANHEBUNG_PVPLUS = {
     1: "Heizkreis",
     2: "Speicher",
     3: "Heizkreis und Speicher",
-}
-
-EXTERNER_SOLLWERT = {
-    0: "kein externer Sollwert",
-    1: "ModBus",
-}
-
-BETRIEBSART_MODBUS = {
-    0: "Aus",
-    1: "Heizen",
-    2: "Kühlen",
 }
 
 WP_STATUS = {
