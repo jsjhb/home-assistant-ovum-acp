@@ -131,6 +131,7 @@ temperature_sensors = [
     {"name": "HK2 Temp Raum soll", "key": "raumsolltemperatur_hk2", "icon": "thermometer", "enable": False},
     {"name": "HK1 Temp Vorlauf soll", "key": "vorlaufsolltemperatur_hk1", "icon": "thermometer"},
     {"name": "HK1 Temp Vorlauf solldiff", "key": "vorlaufsolltemperaturdiff_hk1", "icon": "thermometer", "enable": False},
+    {"name": "HK1 Temp Rücklauf soll", "key": "ruecklaufsolltemperatur_hk1", "icon": "thermometer"},
     {"name": "CUBE Temp Speicher soll PV+", "key": "speichersolltemperatur_pvplus_betrieb", "icon": "thermometer"},
     {"name": "HK1 Temp Rücklauf soll extern", "key": "externe_ruecklaufsolltemperatur_heizen_hk1", "icon": "thermometer"},
     {"name": "HK1 Temp Vorlauf soll Kühlen extern", "key": "externe_vorlaufsolltemperatur_kuehlen_hk1", "icon": "thermometer", "enable": False},
