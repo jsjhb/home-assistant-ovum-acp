@@ -46,7 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: OvumConfigEntry) -> bool
 
     hub = await _create_hub(hass, entry)
     hub.device_info = _create_device_info(entry)
-    // ! _update_device_info_from_hub_data(hub)
+    # ! _update_device_info_from_hub_data(hub)
     entry.runtime_data = hub
     
     if not hub:
@@ -134,20 +134,20 @@ def _create_device_info(entry: ConfigEntry) -> dict:
         "model": "ACP",
     }
 
-//def _update_device_info_from_hub_data(hub: OvumModbusHub) -> None:
-//    """Enrich device info with firmware/hardware data after first refresh."""
-//    data = hub.inverter_data
-//    if not data:
-//        return
-//
-//    sw_version = _join_version(data, "dv", "mcv", "scv")
-//    if sw_version:
-//        hub.device_info["sw_version"] = sw_version
-//
-//    hw_version = _join_version(data, "disphwversion", "ctrlhwversion", "powerhwversion")
-//    if hw_version:
-//        hub.device_info["hw_version"] = hw_version
-//
-//    model = data.get("devtype")
-//    if model is not None:
-//        hub.device_info["model"] = f"Ovum ACP ({model})"
+#def _update_device_info_from_hub_data(hub: OvumModbusHub) -> None:
+#    """Enrich device info with firmware/hardware data after first refresh."""
+#    data = hub.inverter_data
+#    if not data:
+#        return
+#
+#    sw_version = _join_version(data, "dv", "mcv", "scv")
+#    if sw_version:
+#        hub.device_info["sw_version"] = sw_version
+#
+#    hw_version = _join_version(data, "disphwversion", "ctrlhwversion", "powerhwversion")
+#    if hw_version:
+#        hub.device_info["hw_version"] = hw_version
+#
+#    model = data.get("devtype")
+#    if model is not None:
+#        hub.device_info["model"] = f"Ovum ACP ({model})"
