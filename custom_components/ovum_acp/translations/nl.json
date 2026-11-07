@@ -18,5 +18,14 @@
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "allow_any_register": "Schrijven naar elk register toestaan (niet alleen de als R/W gedocumenteerde)"
+        }
+      }
+    }
   }
 }

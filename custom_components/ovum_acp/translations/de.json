@@ -18,5 +18,14 @@
     "abort": {
       "already_configured": "Gerät ist bereits konfiguriert"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "allow_any_register": "Schreiben auf beliebige Register erlauben (nicht nur die als R/W dokumentierten)"
+        }
+      }
+    }
   }
 }

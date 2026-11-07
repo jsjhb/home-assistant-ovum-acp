@@ -1,3 +1,17 @@
+Unreleased
+==========
+
+Summary
+-------
+
+* add services `ovum_acp.read_register` and `ovum_acp.write_register` for
+  direct register access (documentation addresses, 1-based)
+* writing is limited to registers documented as R/W by OVUM (list 20250527);
+  other addresses only with the new option "allow writing to any register"
+* both services share the polling client and lock (the controller accepts
+  only one Modbus TCP client)
+
+
 Changelog for home-assistant-ovum-acp 0.3.3 (2026-09-27)
 ========================================================
 

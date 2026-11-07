@@ -1,0 +1,76 @@
+read_register:
+  name: Read register
+  description: >-
+    Read holding registers of an OVUM controller. The address is given as in
+    OVUM's Modbus documentation (1-based); the conversion to the Modbus
+    protocol address (minus 1) is done internally. Values are returned raw
+    (signed 16 bit), e.g. temperatures in tenths of a degree.
+  fields:
+    name:
+      name: Unit
+      description: Name of the unit as configured in the integration entry.
+      required: true
+      example: "Ovum"
+      selector:
+        text:
+    address:
+      name: Address
+      description: Register address as in OVUM's documentation (1-based).
+      required: true
+      example: 524
+      selector:
+        number:
+          min: 1
+          max: 65535
+          mode: box
+    count:
+      name: Count
+      description: Number of consecutive registers.
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+write_register:
+  name: Write register
+  description: >-
+    Write one 16-bit holding register of an OVUM controller and read it back.
+    Only registers documented as R/W by OVUM are accepted unless "allow
+    writing to any register" is enabled in the integration options. The
+    address is given as in OVUM's documentation (1-based). Values are raw,
+    e.g. temperatures in tenths of a degree (215 = 21.5 °C).
+  fields:
+    name:
+      name: Unit
+      description: Name of the unit as configured in the integration entry.
+      required: true
+      example: "Ovum"
+      selector:
+        text:
+    address:
+      name: Address
+      description: Register address as in OVUM's documentation (1-based).
+      required: true
+      example: 524
+      selector:
+        number:
+          min: 1
+          max: 65535
+          mode: box
+    value:
+      name: Value
+      description: Raw integer value.
+      required: true
+      example: 215
+      selector:
+        number:
+          min: -32768
+          max: 65535
+          mode: box
+    verify:
+      name: Verify
+      description: Read the register back after writing.
+      default: true
+      selector:
+        boolean:
