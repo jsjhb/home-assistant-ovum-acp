@@ -25,6 +25,40 @@ CONF_OVUM_HUB = "ovum_hub"
 CONF_DEVICE_ID = DEFAULT_DEVICE_ID
 ATTR_MANUFACTURER = "OVUM Wärmepumpen GmbH"
 
+# Option: allow ovum_acp.write_register on addresses outside WRITABLE_REGISTERS.
+CONF_ALLOW_ANY_REGISTER = "allow_any_register"
+
+# Holding registers documented as R/W in OVUM's Modbus TCP register list
+# "Anleitung ModBusTCP ab Software V241122" (version 20250527), given as
+# documentation addresses (1-based). ovum_acp.write_register accepts only
+# these unless CONF_ALLOW_ANY_REGISTER is enabled for the config entry.
+# Note: the older list (20240705) also marked 219 (Zapf Solltemperatur),
+# 600 and 1205 as R/W; the newer list moves Zapf Solltemperatur to 205 and
+# marks 600 and 1205 read-only.
+WRITABLE_REGISTERS = {
+    200: "Betriebsart Warmwasser",
+    205: "Zapf Solltemperatur",
+    216: "Warmwasser Solltemperatur",
+    500: "Betriebsart Heizung",
+    524: "Raumsolltemperatur Heizkreis 1",
+    529: "Kombiausgang PuPu Modi",
+    599: "Externe Rücklaufsolltemperatur Heizen Heizkreis 1",
+    641: "Betriebsart Heizkreis 1",
+    642: "Betriebsart Heizkreis 2",
+    700: "Speichersolltemperatur PV+ Betrieb",
+    703: "Sollwertanhebung Warmwasser bei PV-Überschuss",
+    704: "Sollwertanhebung Heizung bei PV-Überschuss",
+    709: "PV Überschussregelungsart",
+    710: "Sollwert PV-Watch TCP",
+    711: "Sollwert Leistungsaufnahme TCP",
+    1050: "Externe Vorlaufsolltemperatur Kühlen Heizkreis 1",
+    1250: "SG-Ready Modus",
+    1251: "SG-Ready Kontakt 1",
+    1252: "SG-Ready Kontakt 2",
+    1350: "Vorgabe Quelle externer Sollwert",
+    1351: "Vorgabe Betriebsart über ModBus",
+}
+
 
 @dataclass
 class SensorGroup:

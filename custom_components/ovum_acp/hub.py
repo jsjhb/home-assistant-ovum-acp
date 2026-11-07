@@ -182,7 +182,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         ]:
             combined_data.update(await read_method())
             await asyncio.sleep(0.2)
-	# read registers 599, 1050, 1350, 1351 only on newer versions of firmware
+        # read registers 599, 1050, 1350, 1351 only on newer versions of firmware
         if combined_data["firmware_data"] > 240626:
             for read_method in [
                 self.read_realtime_data_J,
@@ -276,13 +276,13 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
     async def read_modbus_firmware_data(self) -> Dict[str, Any]:
         """Reads basic firmware data."""
         decode_instructions_firmware_data = [
-	    ("firmware_data", None),
-	]
+            ("firmware_data", None),
+        ]
 
-	return await self._read_modbus_data(
-	    7, 2, decode_instructions_firmware_data, 'firmware_data',
-	    default_decoder="decode_32bit_uint", default_factor=1
-	)
+        return await self._read_modbus_data(
+            7, 2, decode_instructions_firmware_data, 'firmware_data',
+            default_decoder="decode_32bit_uint", default_factor=1
+        )
 
     async def read_realtime_data_1(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 29-37."""
@@ -629,3 +629,75 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
         return data
 
+    # ------------------------------------------------------------------
+    # Direct register access for the ovum_acp.read_register /
+    # ovum_acp.write_register services.
+    #
+    # OVUM documents registers 1-based, Modbus addresses are 0-based:
+    #     protocol address = documentation address - 1
+    #
+    # The controller serves only one Modbus TCP client at a time, so every
+    # access goes through the same client and the same lock as the polling
+    # cycle. A second connection would collide with the coordinator.
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _signed(value: int) -> int:
+        return value - 65536 if value > 32767 else value
+
+    async def read_register_doc(self, address_doc: int, count: int = 1) -> List[int]:
+        """Read count holding registers starting at a documentation address.
+
+        Returns raw signed 16-bit values.
+        """
+        addr = int(address_doc) - 1
+        async with self._read_lock:
+            await self.ensure_connection()
+            response = await self._client.read_holding_registers(
+                address=addr, count=count, device_id=self._deviceid)
+        if (not response) or response.isError() or len(response.registers) != count:
+            raise ModbusIOException(
+                f"Read failed at documentation address {address_doc} (protocol {addr})")
+        return [self._signed(v) for v in response.registers]
+
+    async def write_register_doc(self, address_doc: int, value: int, verify: bool = True) -> Dict[str, Any]:
+        """Write one 16-bit holding register at a documentation address.
+
+        Reads the register before writing and, with verify=True, reads it back
+        afterwards. Returns before/after values and ok/verified flags.
+        """
+        addr = int(address_doc) - 1
+        raw = int(value) & 0xFFFF
+        result: Dict[str, Any] = {
+            "address_doc": int(address_doc),
+            "address_protocol": addr,
+            "requested": int(value),
+        }
+        async with self._read_lock:
+            await self.ensure_connection()
+            before = await self._client.read_holding_registers(
+                address=addr, count=1, device_id=self._deviceid)
+            result["before"] = None if (not before or before.isError()) else self._signed(before.registers[0])
+            response = await self._client.write_register(
+                address=addr, value=raw, device_id=self._deviceid)
+            if (not response) or response.isError():
+                result["ok"] = False
+                result["error"] = str(response)
+                _LOGGER.warning("OVUM %s: write to %s (protocol %s) rejected: %s",
+                                self.name, address_doc, addr, response)
+                return result
+            result["ok"] = True
+            if verify:
+                await asyncio.sleep(0.5)
+                after = await self._client.read_holding_registers(
+                    address=addr, count=1, device_id=self._deviceid)
+                if after and not after.isError():
+                    result["after"] = self._signed(after.registers[0])
+                    result["verified"] = result["after"] == int(value)
+                else:
+                    result["after"] = None
+                    result["verified"] = False
+        _LOGGER.info("OVUM %s: wrote %s to %s (protocol %s), before %s, verified %s",
+                     self.name, value, address_doc, addr, result.get("before"), result.get("verified"))
+        # refresh sensors soon so the new value shows up
+        self.hass.async_create_task(self.async_request_refresh())
+        return result
