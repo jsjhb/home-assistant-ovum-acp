@@ -18,5 +18,14 @@
     "abort": {
       "already_configured": "Apparaat is al geconfigureerd"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "read_unofficial_registers": "Onofficiële waarden lezen (koelcircuit, debiet, ventilator, warmtemeter; niet in OVUMs registerlijst)"
+        }
+      }
+    }
   }
 }

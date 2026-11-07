@@ -9,8 +9,10 @@ from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfEnergy,
     UnitOfPower,
+    UnitOfPressure,
     UnitOfTemperature,
     UnitOfTime,
+    UnitOfVolumeFlowRate,
 )
 
 from typing import Dict, NamedTuple, Any
@@ -24,6 +26,10 @@ DEFAULT_DEVICE_ID = 247
 CONF_OVUM_HUB = "ovum_hub"
 CONF_DEVICE_ID = DEFAULT_DEVICE_ID
 ATTR_MANUFACTURER = "OVUM Wärmepumpen GmbH"
+
+# Option: also read values that are not part of OVUM's published register
+# list (refrigerant circuit, flow, fan, total heat meter). Off by default.
+CONF_READ_UNOFFICIAL = "read_unofficial_registers"
 
 
 @dataclass
@@ -195,6 +201,86 @@ duration_hours_sensors = [
     {"name": "AIR Betriebsstuden Kompressor", "key": "betriebsstuden_kompressor"},
 ]
 
+# ----------------------------------------------------------------------
+# Unofficial sensors (only created when CONF_READ_UNOFFICIAL is enabled).
+# The values are not in OVUM's published register list; they come from the
+# controller's parameter table, see hub.read_unofficial_*.
+# ----------------------------------------------------------------------
+pressure_sensors_group = SensorGroup(
+    unit_of_measurement=UnitOfPressure.BAR,
+    device_class=SensorDeviceClass.PRESSURE,
+    state_class=SensorStateClass.MEASUREMENT,
+    icon="mdi:gauge",
+)
+
+volume_flow_sensors_group = SensorGroup(
+    unit_of_measurement=UnitOfVolumeFlowRate.LITERS_PER_MINUTE,
+    device_class=SensorDeviceClass.VOLUME_FLOW_RATE,
+    state_class=SensorStateClass.MEASUREMENT,
+    icon="mdi:waves-arrow-right",
+)
+
+# Temperature differences (superheat): deliberately without device_class, so
+# Home Assistant does not convert them like absolute temperatures.
+temperature_delta_sensors_group = SensorGroup(
+    unit_of_measurement="K",
+    state_class=SensorStateClass.MEASUREMENT,
+    icon="mdi:delta",
+)
+
+rotation_sensors_group = SensorGroup(
+    unit_of_measurement="rps",
+    state_class=SensorStateClass.MEASUREMENT,
+    icon="mdi:fan",
+)
+
+# Controller counters only ever increase, hence TOTAL_INCREASING.
+energy_total_sensors_group = SensorGroup(
+    unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+    device_class=SensorDeviceClass.ENERGY,
+    state_class=SensorStateClass.TOTAL_INCREASING,
+    icon="mdi:counter",
+)
+
+unofficial_temperature_sensors = [
+    {"name": "KK Heissgas", "key": "kk_heissgas", "icon": "thermometer-high"},
+    {"name": "KK Heissgas soll", "key": "kk_heissgas_soll", "icon": "thermometer-high"},
+    {"name": "KK Sauggas", "key": "kk_sauggas", "icon": "thermometer-low"},
+    {"name": "KK Kondensationstemperatur", "key": "kk_kondensationstemperatur", "icon": "thermometer"},
+    {"name": "KK Verdampfungstemperatur", "key": "kk_verdampfungstemperatur", "icon": "thermometer"},
+    {"name": "AIR Lufttemperatur", "key": "lufttemperatur_aircube", "icon": "thermometer"},
+    {"name": "AIR Quelle Eintritt", "key": "quelle_eintritt", "icon": "thermometer"},
+    {"name": "AIR Quelle Austritt", "key": "quelle_austritt", "icon": "thermometer"},
+]
+
+unofficial_pressure_sensors = [
+    {"name": "KK Hochdruck", "key": "kk_hochdruck", "icon": "gauge-full"},
+    {"name": "KK Niederdruck", "key": "kk_niederdruck", "icon": "gauge-low"},
+]
+
+unofficial_volume_flow_sensors = [
+    {"name": "AIR Durchfluss", "key": "durchfluss", "icon": "waves-arrow-right"},
+]
+
+unofficial_temperature_delta_sensors = [
+    {"name": "KK Überhitzung", "key": "kk_ueberhitzung", "icon": "delta"},
+    {"name": "KK Überhitzung soll", "key": "kk_ueberhitzung_soll", "icon": "delta"},
+]
+
+unofficial_rotation_sensors = [
+    {"name": "KK Drehzahl Verdichter", "key": "kk_drehzahl_verdichter", "icon": "engine"},
+]
+
+unofficial_percentage_sensors = [
+    {"name": "KK Expansionsventil", "key": "expansionsventil_stellung", "icon": "valve"},
+    {"name": "AIR Ventilator Ansteuerung", "key": "ventilator_ansteuerung", "icon": "fan"},
+    {"name": "AIR EQ Pumpe", "key": "eq_pumpe", "icon": "pump"},
+]
+
+unofficial_energy_total_sensors = [
+    {"name": "Wärmemenge gesamt", "key": "waermemenge_gesamt", "icon": "counter"},
+]
+
 SENSOR_TYPES = {
     **create_sensor_descriptions(power_sensors_group, power_sensors),
     **create_sensor_descriptions(temperature_sensors_group, temperature_sensors),
@@ -203,6 +289,16 @@ SENSOR_TYPES = {
     **create_sensor_descriptions(duration_minutes_sensors_group, duration_minutes_sensors),
     **create_sensor_descriptions(duration_hours_sensors_group, duration_hours_sensors),
    
+}
+
+UNOFFICIAL_SENSOR_TYPES = {
+    **create_sensor_descriptions(temperature_sensors_group, unofficial_temperature_sensors),
+    **create_sensor_descriptions(pressure_sensors_group, unofficial_pressure_sensors),
+    **create_sensor_descriptions(volume_flow_sensors_group, unofficial_volume_flow_sensors),
+    **create_sensor_descriptions(temperature_delta_sensors_group, unofficial_temperature_delta_sensors),
+    **create_sensor_descriptions(rotation_sensors_group, unofficial_rotation_sensors),
+    **create_sensor_descriptions(information_percentage_sensors_group, unofficial_percentage_sensors),
+    **create_sensor_descriptions(energy_total_sensors_group, unofficial_energy_total_sensors),
 }
 
 BETRIEBSART_MODBUS = {

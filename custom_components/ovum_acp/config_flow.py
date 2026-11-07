@@ -6,7 +6,7 @@ from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_DEVICE_ID,
 from homeassistant.core import HomeAssistant, callback
 import logging
 
-from .const import DEFAULT_NAME, DEFAULT_PORT, DEFAULT_DEVICE_ID, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import CONF_READ_UNOFFICIAL, DEFAULT_NAME, DEFAULT_PORT, DEFAULT_DEVICE_ID, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .hub import OvumModbusHub
 
 _LOGGER = logging.getLogger(__name__)
@@ -94,6 +94,8 @@ class OvumModbusOptionsFlowHandler(config_entries.OptionsFlow):
                     _LOGGER.error(f"Hub not found for entry_id: {self.config_entry.entry_id}")
                     return self.async_abort(reason="hub_not_found")
 
+                read_unofficial = user_input.pop(CONF_READ_UNOFFICIAL, False)
+
                 # Update the hub configuration
                 await hub.update_connection_settings(user_input[CONF_HOST], user_input[CONF_PORT], user_input[CONF_DEVICE_ID], user_input[CONF_SCAN_INTERVAL])
 
@@ -103,7 +105,8 @@ class OvumModbusOptionsFlowHandler(config_entries.OptionsFlow):
                     data={**self.config_entry.data, **user_input},
                 )
 
-                return self.async_create_entry(title="", data=user_input)
+                return self.async_create_entry(
+                    title="", data={**self.config_entry.options, CONF_READ_UNOFFICIAL: read_unofficial})
             except Exception as e:
                 _LOGGER.error(f"Error updating Ovum Modbus configuration: {str(e)}")
                 return self.async_abort(reason="update_failed")
@@ -116,5 +119,6 @@ class OvumModbusOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Required(CONF_PORT, default=self.config_entry.data.get(CONF_PORT, 502)): int,
                 vol.Required(CONF_DEVICE_ID, default=self.config_entry.data.get(CONF_DEVICE_ID, 247)): int,
                 vol.Optional(CONF_SCAN_INTERVAL, default=self.config_entry.data.get(CONF_SCAN_INTERVAL, 30)): int,
+                vol.Optional(CONF_READ_UNOFFICIAL, default=self.config_entry.options.get(CONF_READ_UNOFFICIAL, False)): bool,
             }),
         )

@@ -19,6 +19,26 @@ This integration can be installed using a custom repository in HACS. Add the rep
 1. Navigate to the "Integrations" page in your configuration, then click "Add Integration" and select "OVUM ACP".
 2. Enter the IP Address, Modbus port, unit id and interval.
 
+## Unofficial values (optional)
+
+In the integration options you can enable "read unofficial values". The
+integration then also reads 18 values that are **not** part of OVUM's
+published register list:
+
+- refrigerant circuit: compressor speed (rps), high and low pressure,
+  hot gas and hot gas setpoint, suction gas, superheat and superheat
+  setpoint, condensing and evaporating temperature, expansion valve position
+- outdoor unit: air inlet temperature, source inlet/outlet temperature,
+  source pump output, volume flow, fan output
+- total heat meter (kWh, as shown under "HEIZUNG" on the display)
+
+The controller keeps these in a self-describing parameter table (10
+registers per parameter: limits, unit, flags, 4-character short name,
+value). The addresses were found and checked on AC520P units with firmware
+250918 against the controller display. They are not guaranteed by OVUM and
+may differ on other models or firmware levels — check the values against
+your display before relying on them. The option is off by default.
+
 ## Additional notes
 
 Development of the integration is heavily influenced and derived from [SAJ H2 Inverter Modbus](https://github.com/stanus74/home-assistant-saj-h2-modbus). Thanks to stanus74!

@@ -1,3 +1,15 @@
+Unreleased
+==========
+
+Summary
+-------
+
+* new option "read unofficial values": 18 additional sensors from the
+  controller's parameter table (refrigerant circuit, pressures, compressor
+  speed, flow, fan, total heat meter). Not in OVUM's register list, off by
+  default, verified on AC520P with firmware 250918.
+
+
 Changelog for home-assistant-ovum-acp 0.3.3 (2026-09-27)
 ========================================================
 
