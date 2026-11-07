@@ -5,7 +5,9 @@ from datetime import timedelta
 from typing import List, Callable, Any, Dict, Optional, Tuple
 import inspect
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL, CONF_DEVICE_ID
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.config_entries import ConfigEntry
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.client.mixin import ModbusClientMixin
@@ -182,7 +184,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         ]:
             combined_data.update(await read_method())
             await asyncio.sleep(0.2)
-	# read registers 599, 1050, 1350, 1351 only on newer versions of firmware
+        # read registers 599, 1050, 1350, 1351 only on newer versions of firmware
         if combined_data["firmware_data"] > 240626:
             for read_method in [
                 self.read_realtime_data_J,
@@ -276,13 +278,13 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
     async def read_modbus_firmware_data(self) -> Dict[str, Any]:
         """Reads basic firmware data."""
         decode_instructions_firmware_data = [
-	    ("firmware_data", None),
-	]
+            ("firmware_data", None),
+        ]
 
-	return await self._read_modbus_data(
-	    7, 2, decode_instructions_firmware_data, 'firmware_data',
-	    default_decoder="decode_32bit_uint", default_factor=1
-	)
+        return await self._read_modbus_data(
+            7, 2, decode_instructions_firmware_data, 'firmware_data',
+            default_decoder="decode_32bit_uint", default_factor=1
+        )
 
     async def read_realtime_data_1(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 29-37."""
@@ -629,3 +631,5 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
         return data
 
+# Typed config entry: runtime_data carries the hub instance.
+type OvumConfigEntry = ConfigEntry[OvumModbusHub]
