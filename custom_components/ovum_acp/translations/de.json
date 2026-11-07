@@ -18,5 +18,14 @@
     "abort": {
       "already_configured": "Gerät ist bereits konfiguriert"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "read_unofficial_registers": "Inoffizielle Werte lesen (Kältekreis, Durchfluss, Ventilator, Wärmemenge; nicht in OVUMs Registerliste)"
+        }
+      }
+    }
   }
 }

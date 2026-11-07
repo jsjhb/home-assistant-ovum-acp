@@ -18,5 +18,14 @@
     "abort": {
       "already_configured": "Device is already configured"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "read_unofficial_registers": "Read unofficial values (refrigerant circuit, flow, fan, heat meter; not in OVUM's register list)"
+        }
+      }
+    }
   }
 }

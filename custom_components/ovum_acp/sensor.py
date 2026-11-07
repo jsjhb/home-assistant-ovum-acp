@@ -6,7 +6,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import logging
 
-from .const import DOMAIN, SENSOR_TYPES, OvumModbusSensorEntityDescription
+from .const import DOMAIN, SENSOR_TYPES, UNOFFICIAL_SENSOR_TYPES, OvumModbusSensorEntityDescription
 from .hub import OvumModbusHub
 
 _LOGGER = logging.getLogger(__name__)
@@ -16,8 +16,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     hub: OvumModbusHub = hass.data[DOMAIN][entry.entry_id]["hub"]
     device_info = hass.data[DOMAIN][entry.entry_id]["device_info"]
     
+    descriptions = list(SENSOR_TYPES.values())
+    if hub.read_unofficial:
+        descriptions += list(UNOFFICIAL_SENSOR_TYPES.values())
+
     entities = []
-    for description in SENSOR_TYPES.values():
+    for description in descriptions:
         entity = OvumSensor(hub, device_info, description)
         entities.append(entity)
 

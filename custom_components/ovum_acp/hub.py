@@ -36,6 +36,8 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         self._max_retries = 2
         self._retry_delay = 1
         self._operation_timeout = 30
+        # set from the config entry options, see CONF_READ_UNOFFICIAL
+        self.read_unofficial = False
 
     def _create_client(self) -> AsyncModbusTcpClient:
         """Creates a new optimized instance of the AsyncModbusTcpClient."""
@@ -182,11 +184,22 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         ]:
             combined_data.update(await read_method())
             await asyncio.sleep(0.2)
-	# read registers 599, 1050, 1350, 1351 only on newer versions of firmware
+        # read registers 599, 1050, 1350, 1351 only on newer versions of firmware
         if combined_data["firmware_data"] > 240626:
             for read_method in [
                 self.read_realtime_data_J,
                 self.read_realtime_data_K,
+            ]:
+                combined_data.update(await read_method())
+                await asyncio.sleep(0.2)
+        if self.read_unofficial:
+            for read_method in [
+                self.read_unofficial_1,
+                self.read_unofficial_2,
+                self.read_unofficial_3,
+                self.read_unofficial_4,
+                self.read_unofficial_5,
+                self.read_unofficial_6,
             ]:
                 combined_data.update(await read_method())
                 await asyncio.sleep(0.2)
@@ -276,13 +289,13 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
     async def read_modbus_firmware_data(self) -> Dict[str, Any]:
         """Reads basic firmware data."""
         decode_instructions_firmware_data = [
-	    ("firmware_data", None),
-	]
+            ("firmware_data", None),
+        ]
 
-	return await self._read_modbus_data(
-	    7, 2, decode_instructions_firmware_data, 'firmware_data',
-	    default_decoder="decode_32bit_uint", default_factor=1
-	)
+        return await self._read_modbus_data(
+            7, 2, decode_instructions_firmware_data, 'firmware_data',
+            default_decoder="decode_32bit_uint", default_factor=1
+        )
 
     async def read_realtime_data_1(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 29-37."""
@@ -629,3 +642,107 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
 
         return data
 
+    # ------------------------------------------------------------------
+    # Unofficial values (only read when CONF_READ_UNOFFICIAL is enabled)
+    #
+    # These values are NOT part of OVUM's published Modbus register list.
+    # The controller keeps them in a self-describing parameter table: one
+    # record of 10 holding registers per parameter,
+    #
+    #     +0 min   +1 max   +2 unit code   +3 flags
+    #     +4/+5 short name (4 ASCII chars)   +6 id   +7 reserved
+    #     +8 value   +9 high word for 32-bit parameters
+    #
+    # The short name of a record labels the value two registers BEFORE it,
+    # i.e. the value of the preceding record. This was checked against the
+    # documented registers 201/202/203 (records Spo/Spm/Spu gave the same
+    # 50.7 / 49.4 / 47.9 °C at the same time).
+    #
+    # Addresses below are protocol addresses (0-based), not documentation
+    # addresses. They were found on AC520P units with firmware 250918; other
+    # models or firmware levels may differ.
+    # ------------------------------------------------------------------
+    async def read_unofficial_1(self) -> Dict[str, Any]:
+        """Refrigerant circuit, protocol addresses 12918-12998."""
+
+        decode_instructions = [
+            ("kk_drehzahl_verdichter", "decode_16bit_int", 1),   # Rps
+            (None, "skip_bytes", 18),
+            ("kk_hochdruck", "decode_16bit_int", 0.1),           # HP
+            (None, "skip_bytes", 18),
+            ("kk_niederdruck", "decode_16bit_int", 0.1),         # LP
+            (None, "skip_bytes", 18),
+            ("kk_heissgas", "decode_16bit_int", 0.1),            # HG
+            (None, "skip_bytes", 18),
+            ("kk_heissgas_soll", "decode_16bit_int", 0.1),       # HGso
+            (None, "skip_bytes", 38),
+            ("kk_sauggas", "decode_16bit_int", 0.1),             # SG
+            (None, "skip_bytes", 18),
+            ("kk_ueberhitzung_soll", "decode_16bit_int", 0.1),   # SHso
+            (None, "skip_bytes", 18),
+            ("kk_ueberhitzung", "decode_16bit_int", 0.1),        # SHis
+        ]
+
+        return await self._read_modbus_data(
+            12918, 81, decode_instructions, 'unofficial_1',
+            default_decoder="decode_16bit_int", default_factor=0.1
+        )
+
+    async def read_unofficial_2(self) -> Dict[str, Any]:
+        """Refrigerant circuit and source side, protocol addresses 13018-13068."""
+
+        decode_instructions = [
+            ("kk_kondensationstemperatur", "decode_16bit_int", 0.1),  # Cond
+            (None, "skip_bytes", 18),
+            ("lufttemperatur_aircube", "decode_16bit_int", 0.1),      # ATAC
+            (None, "skip_bytes", 18),
+            ("kk_verdampfungstemperatur", "decode_16bit_int", 0.1),   # Evap
+            (None, "skip_bytes", 18),
+            ("quelle_eintritt", "decode_16bit_int", 0.1),             # EQin
+            (None, "skip_bytes", 18),
+            ("quelle_austritt", "decode_16bit_int", 0.1),             # EQou
+            (None, "skip_bytes", 18),
+            ("eq_pumpe", "decode_16bit_int", 0.01),                   # AOE1, display "EQ P"
+        ]
+
+        return await self._read_modbus_data(
+            13018, 51, decode_instructions, 'unofficial_2',
+            default_decoder="decode_16bit_int", default_factor=0.1
+        )
+
+    async def read_unofficial_3(self) -> Dict[str, Any]:
+        """Expansion valve position, protocol address 13308 (EEV%)."""
+
+        return await self._read_modbus_data(
+            13308, 1, [("expansionsventil_stellung", "decode_16bit_int", 0.01)],
+            'unofficial_3', default_decoder="decode_16bit_int", default_factor=0.01
+        )
+
+    async def read_unofficial_4(self) -> Dict[str, Any]:
+        """Source side volume flow, protocol address 14088 (Flow)."""
+
+        return await self._read_modbus_data(
+            14088, 1, [("durchfluss", "decode_16bit_int", 0.1)],
+            'unofficial_4', default_decoder="decode_16bit_int", default_factor=0.1
+        )
+
+    async def read_unofficial_5(self) -> Dict[str, Any]:
+        """Fan output, protocol address 14798 (AOE5, 0-10000)."""
+
+        return await self._read_modbus_data(
+            14798, 1, [("ventilator_ansteuerung", "decode_16bit_int", 0.01)],
+            'unofficial_5', default_decoder="decode_16bit_int", default_factor=0.01
+        )
+
+    async def read_unofficial_6(self) -> Dict[str, Any]:
+        """Total heat meter, protocol addresses 12568-12569 (HeaT).
+
+        32 bit, low word first. Checked against the controller display of
+        three units: 12590.48 / 28506.38 / 29861.07 kWh read, 12590 / 28506 /
+        29861 kWh shown under "HEIZUNG".
+        """
+
+        return await self._read_modbus_data(
+            12568, 2, [("waermemenge_gesamt", "decode_32bit_int", 0.01)],
+            'unofficial_6', default_decoder="decode_32bit_int", default_factor=0.01
+        )
