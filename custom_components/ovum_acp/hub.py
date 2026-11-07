@@ -182,7 +182,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         ]:
             combined_data.update(await read_method())
             await asyncio.sleep(0.2)
-	# read registers 599, 1050, 1350, 1351 only on newer versions of firmware
+        # read registers 599, 1050, 1350, 1351 only on newer versions of firmware
         if combined_data["firmware_data"] > 240626:
             for read_method in [
                 self.read_realtime_data_J,
@@ -276,13 +276,13 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
     async def read_modbus_firmware_data(self) -> Dict[str, Any]:
         """Reads basic firmware data."""
         decode_instructions_firmware_data = [
-	    ("firmware_data", None),
-	]
+            ("firmware_data", None),
+        ]
 
-	return await self._read_modbus_data(
-	    7, 2, decode_instructions_firmware_data, 'firmware_data',
-	    default_decoder="decode_32bit_uint", default_factor=1
-	)
+        return await self._read_modbus_data(
+            7, 2, decode_instructions_firmware_data, 'firmware_data',
+            default_decoder="decode_32bit_uint", default_factor=1
+        )
 
     async def read_realtime_data_1(self) -> Dict[str, Any]:
         """Reads real-time operating data, Modbus 29-37."""
