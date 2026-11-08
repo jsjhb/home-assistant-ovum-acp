@@ -1,4 +1,5 @@
-from typing import Optional
+import asyncio
+from typing import Any, Optional, Literal, TypeAlias, Dict, NamedTuple
 from dataclasses import dataclass
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -6,6 +7,9 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.const import (
+    CONF_HOST,
+    CONF_PORT,
+    CONF_SCAN_INTERVAL,
     UnitOfElectricCurrent,
     UnitOfEnergy,
     UnitOfPower,
@@ -13,18 +17,24 @@ from homeassistant.const import (
     UnitOfTime,
 )
 
-from typing import Dict, NamedTuple, Any
-
 
 DOMAIN = "ovum_acp"
 DEFAULT_NAME = "Ovum"
 DEFAULT_SCAN_INTERVAL = 60
 DEFAULT_PORT = 502
-DEFAULT_DEVICE_ID = 247
+DEFAULT_MODBUSDEVICE = 247
 CONF_OVUM_HUB = "ovum_hub"
-CONF_DEVICE_ID = DEFAULT_DEVICE_ID
+CONF_MODBUSDEVICE = "modbusdevice"
 ATTR_MANUFACTURER = "OVUM Wärmepumpen GmbH"
 
+# Single source of truth for configuration defaults used by hub.__init__ and
+# async_update_options.  Pass directly to get_config_values(); it is read-only.
+DEFAULT_CONFIG_SCHEMA: dict[str, Any] = {
+    CONF_HOST: None,
+    CONF_PORT: DEFAULT_PORT,
+    CONF_MODBUSDEVICE: DEFAULT_MODBUSDEVICE,
+    CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
+}
 
 @dataclass
 class SensorGroup:
@@ -82,18 +92,17 @@ duration_hours_sensors_group = SensorGroup(
 def create_sensor_descriptions(group: SensorGroup, sensors: list) -> dict:
     descriptions = {}
     for sensor in sensors:
-        
         icon = sensor.get("icon", group.icon)
         if icon and not icon.startswith("mdi:"):
             icon = f"mdi:{icon}"
         
-        
         enable = sensor.get("enable", True)
+        native_unit = sensor.get("unit_of_measurement", group.unit_of_measurement)
         
         descriptions[sensor["key"]] = OvumModbusSensorEntityDescription(
             name=sensor["name"],
             key=sensor["key"],
-            native_unit_of_measurement=group.unit_of_measurement,
+            native_unit_of_measurement=native_unit,
             icon=icon,
             device_class=group.device_class,
             state_class=group.state_class,
@@ -101,9 +110,6 @@ def create_sensor_descriptions(group: SensorGroup, sensors: list) -> dict:
             force_update=group.force_update  # force_update von der Gruppe übernehmen
         )
     return descriptions
-
-
-
 
 power_sensors = [
     {"name": "AIR Leistung Wärme", "key": "waermeleistung", "icon": "heat-wave"},
@@ -202,7 +208,6 @@ SENSOR_TYPES = {
     **create_sensor_descriptions(information_percentage_sensors_group, information_percentage_sensors),
     **create_sensor_descriptions(duration_minutes_sensors_group, duration_minutes_sensors),
     **create_sensor_descriptions(duration_hours_sensors_group, duration_hours_sensors),
-   
 }
 
 BETRIEBSART_MODBUS = {

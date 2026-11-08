@@ -3,18 +3,19 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
 import logging
 
-from .const import DOMAIN, SENSOR_TYPES, OvumModbusSensorEntityDescription
+from .const import SENSOR_TYPES, OvumModbusSensorEntityDescription
 from .hub import OvumModbusHub
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback) -> None:
     """Set up Ovum sensors from a config entry."""
-    hub: OvumModbusHub = hass.data[DOMAIN][entry.entry_id]["hub"]
-    device_info = hass.data[DOMAIN][entry.entry_id]["device_info"]
+    hub: OvumModbusHub = entry.runtime_data
+    device_info = hub.device_info
     
     entities = []
     for description in SENSOR_TYPES.values():
@@ -44,7 +45,7 @@ class OvumSensor(CoordinatorEntity, SensorEntity):
         """Return the state of the sensor."""
         value = self.coordinator.data.get(self.entity_description.key)
         if value is None:
-            _LOGGER.debug(f"No data for sensor {self._attr_name}")
+            _LOGGER.debug(f"No data for sensor %s", self.entity_description.key)
         return value
 
     @property

@@ -3,10 +3,10 @@
   "name": "Ovum ACP",
   "codeowners": ["@jsjhb"],
   "config_flow": true,
-  "dependencies": [], 
   "documentation": "https://github.com/jsjhb/home-assistant-ovum-acp",
-  "iot_class": "local_polling",
+  "integration_type": "hub",
+  "iot_class": "local_poll",
   "issue_tracker": "https://github.com/jsjhb/home-assistant-ovum-acp/issues",
   "requirements": ["pymodbus>=3.9.0"],
-  "version": "0.3.1"
+  "version": "0.3.3"
 }
