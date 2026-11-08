@@ -1,4 +1,12 @@
-Changelog for home-assistant-ovum-acp 0.3.3 (2026-11-08)
+Changelog for home-assistant-ovum-acp 0.3.4 (2026-11-08)
+========================================================
+
+Summary
+-------
+
+* just updated the version number due to local hickup
+
+Changelog for home-assistant-ovum-acp 0.3.3 (2026-11-08) - revoked
 ========================================================
 
 Summary
