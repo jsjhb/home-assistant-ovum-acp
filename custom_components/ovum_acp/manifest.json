@@ -5,7 +5,7 @@
   "config_flow": true,
   "documentation": "https://github.com/jsjhb/home-assistant-ovum-acp",
   "integration_type": "hub",
-  "iot_class": "local_polling",
+  "iot_class": "local_poll",
   "issue_tracker": "https://github.com/jsjhb/home-assistant-ovum-acp/issues",
   "requirements": ["pymodbus>=3.9.0"],
   "version": "0.3.3"

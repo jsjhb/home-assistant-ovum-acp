@@ -9,7 +9,6 @@ from homeassistant.components.sensor import (
 from homeassistant.const import (
     CONF_HOST,
     CONF_PORT,
-    CONF_DEVICE_ID,
     CONF_SCAN_INTERVAL,
     UnitOfElectricCurrent,
     UnitOfEnergy,
@@ -23,9 +22,9 @@ DOMAIN = "ovum_acp"
 DEFAULT_NAME = "Ovum"
 DEFAULT_SCAN_INTERVAL = 60
 DEFAULT_PORT = 502
-DEFAULT_DEVICE_ID = 247
+DEFAULT_MODBUSDEVICE = 247
 CONF_OVUM_HUB = "ovum_hub"
-CONF_DEVICE_ID = DEFAULT_DEVICE_ID
+CONF_MODBUSDEVICE = "modbusdevice"
 ATTR_MANUFACTURER = "OVUM Wärmepumpen GmbH"
 
 # Single source of truth for configuration defaults used by hub.__init__ and
@@ -33,7 +32,7 @@ ATTR_MANUFACTURER = "OVUM Wärmepumpen GmbH"
 DEFAULT_CONFIG_SCHEMA: dict[str, Any] = {
     CONF_HOST: None,
     CONF_PORT: DEFAULT_PORT,
-    CONF_DEVICE_ID: DEFAULT_DEVICE_ID,
+    CONF_MODBUSDEVICE: DEFAULT_MODBUSDEVICE,
     CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
 }
 

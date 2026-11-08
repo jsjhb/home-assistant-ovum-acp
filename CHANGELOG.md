@@ -1,13 +1,25 @@
-Changelog for home-assistant-ovum-acp 0.3.3 (2026-09-27)
+Changelog for home-assistant-ovum-acp 0.3.3 (2026-11-08)
 ========================================================
 
 Summary
 -------
 
+* rewrite config flow code
 * selectively request registes 1050, 1350 and 1351 (added in 0.3.2)
   only on firmware levels above 240626
 * add firmware level as sensor in HA
-* rewrite config flow code
+* minimum scan interval is floored at 30s
+* bigger refactor to actualize the code in preparation for future
+  development
+* add brand images
+* fix syntax error with tab instead of spaces (also reported in PR #8)
+
+Details
+-------
+
+The code up-to-now was rather old, thus rewriting was a good idea. The
+config flow now works as expected, which was the main target for this
+release. 
 
 
 Changelog for home-assistant-ovum-acp 0.3.2 (2026-09-27)

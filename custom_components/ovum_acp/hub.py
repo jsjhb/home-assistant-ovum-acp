@@ -5,29 +5,54 @@ from datetime import timedelta
 from typing import List, Callable, Any, Dict, Optional, Tuple
 import inspect
 from homeassistant.core import HomeAssistant
-from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL, CONF_DEVICE_ID
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.config_entries import ConfigEntry
 from pymodbus.client import AsyncModbusTcpClient
 from pymodbus.exceptions import ConnectionException, ModbusIOException
 from pymodbus.client.mixin import ModbusClientMixin
 
-from .const import BETRIEBSART_MODBUS, BETRIEBSART_MODI, BETRIEBSART_HK, EXTERNER_SOLLWERT, KAELTEKREIS_MODI, PUPU_MODI, PV_UEBERSCHUSSREGELUNG, SGREADY_MODUS, SOLLWERTANHEBUNG_PVPLUS, WP_STATUS
+from .const import (
+    BETRIEBSART_MODBUS,
+    BETRIEBSART_MODI,
+    BETRIEBSART_HK,
+    EXTERNER_SOLLWERT,
+    KAELTEKREIS_MODI,
+    PUPU_MODI,
+    PV_UEBERSCHUSSREGELUNG,
+    SGREADY_MODUS,
+    SOLLWERTANHEBUNG_PVPLUS,
+    WP_STATUS,
+    DEFAULT_CONFIG_SCHEMA,
+    CONF_MODBUSDEVICE,
+)
+from .cfgutils import get_config_values
 
 _LOGGER = logging.getLogger(__name__)
 
 class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
-    def __init__(self, hass: HomeAssistant, name: str, host: str, port: int, deviceid: int, scan_interval: int) -> None:
+    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+        self._config_entry = config_entry
+
+        config = get_config_values(config_entry, DEFAULT_CONFIG_SCHEMA)
+
+        # Config extraction - Connection
+        host = config[CONF_HOST]
+        port = config[CONF_PORT]
+        modbusdevice = config[CONF_MODBUSDEVICE]
+        scan_interval = config[CONF_SCAN_INTERVAL]
+
         super().__init__(
             hass,
             _LOGGER,
-            name=name,
+            name=config_entry.title,
+            config_entry=config_entry,
             update_interval=timedelta(seconds=scan_interval),
             update_method=self._async_update_data,
         )
         self._host = host
         self._port = port
-        self._deviceid = deviceid
+        self._modbusdevice = modbusdevice
         self._client: Optional[AsyncModbusTcpClient] = None
         self._read_lock = asyncio.Lock()
         self._connection_lock = asyncio.Lock()
@@ -49,15 +74,15 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         _LOGGER.debug(f"Created new Modbus client: AsyncModbusTcpClient {self._host}:{self._port}.")
         return client
 
-    async def update_connection_settings(self, host: str, port: int, deviceid: int, scan_interval: int) -> None:
+    async def update_connection_settings(self, host: str, port: int, modbusdevice: int, scan_interval: int) -> None:
         """Updates the connection settings with improved synchronization."""
         async with self._connection_lock:
             self.updating_settings = True
             try:
-                connection_changed = (host != self._host) or (port != self._port) or (deviceid != self._deviceid)
+                connection_changed = (host != self._host) or (port != self._port) or (modbusdevice != self._modbusdevice)
                 self._host = host
                 self._port = port
-                self._deviceid =deviceid 
+                self._modbusdevice = modbusdevice 
                 self.update_interval = timedelta(seconds=scan_interval)
 
                 if connection_changed:
@@ -131,7 +156,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
         for attempt in range(max_retries):
             try:
                 async with self._read_lock:
-                    response = await self._client.read_holding_registers(address=address, count=count, device_id=self._deviceid)
+                    response = await self._client.read_holding_registers(address=address, count=count, device_id=self._modbusdevice)
 
                 if (not response)  or response.isError() or len(response.registers) != count:
                     raise ModbusIOException(f"Invalid response from address {address}")
@@ -219,7 +244,7 @@ class OvumModbusHub(DataUpdateCoordinator[Dict[str, Any]]):
             Dict[str, Any]: Decoded data as a dictionary.
         """
         try:
-            regs = await self.try_read_registers(self._deviceid, start_address, count)
+            regs = await self.try_read_registers(self._modbusdevice, start_address, count)
             if not regs:
                 _LOGGER.error(f"Error reading modbus data: No response for {data_key}")
                 return {}

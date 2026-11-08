@@ -1,4 +1,7 @@
 """The Ovum Modbus Integration."""
+
+from __future__ import annotations
+
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -9,7 +12,6 @@ from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_PORT,
-    CONF_DEVICE_ID,
     CONF_SCAN_INTERVAL,
     Platform,
 )
@@ -18,6 +20,7 @@ from .const import (
     ATTR_MANUFACTURER,
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_CONFIG_SCHEMA,
+    CONF_MODBUSDEVICE,
 )
 from homeassistant.helpers import config_validation as cv
 from .cfgutils import get_config_value, get_config_values
@@ -27,10 +30,10 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = list[Platform] = [
+PLATFORMS: list[Platform] = [
     Platform.SENSOR,
-    Platform.NUMBER,
-    Platform.TEXT,
+    #Platform.NUMBER,
+    #Platform.TEXT,
 ]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -46,17 +49,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: OvumConfigEntry) -> bool
 
     hub = await _create_hub(hass, entry)
     hub.device_info = _create_device_info(entry)
-    # ! _update_device_info_from_hub_data(hub)
+    _update_device_info_from_hub_data(hub)
     entry.runtime_data = hub
     
-    if not hub:
-        return False
-
-    hass.data[DOMAIN][entry.entry_id] = {
-        "hub": hub,
-        "device_info": _create_device_info(entry)
-    }
-
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_update_options))
 
@@ -95,9 +90,7 @@ async def async_update_options(hass: HomeAssistant, entry: OvumConfigEntry) -> N
 
 async def _create_hub(hass: HomeAssistant, entry: OvumConfigEntry) -> OvumModbusHub:
     """Helper function to create the Ovum Modbus hub."""
-    scan_interval = get_config_value(
-        entry, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
-    )
+    scan_interval = get_config_value(entry, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     _LOGGER.info(f"Setting scan interval to {scan_interval} seconds")
     _LOGGER.info("Starting hub with first refresh...")
 
@@ -116,7 +109,7 @@ async def _create_hub(hass: HomeAssistant, entry: OvumConfigEntry) -> OvumModbus
         # retry while the inverter is unreachable would leak another set.
         try:
             await hub.async_unload_entry()
-        except Exception as celanup_err:
+        except Exception as cleanup_err:
             _LOGGER.debug("Ignoring hub teardown error: %s", cleanup_err)
         raise
     _LOGGER.info(
@@ -130,20 +123,21 @@ def _create_device_info(entry: ConfigEntry) -> dict:
     return {
         "identifiers": {(DOMAIN, entry.data[CONF_NAME])},
         "name": entry.data[CONF_NAME],
-        "manufacturer": ATTR_MANUFACTURER
+        "manufacturer": ATTR_MANUFACTURER,
         "model": "ACP",
     }
 
-#def _update_device_info_from_hub_data(hub: OvumModbusHub) -> None:
-#    """Enrich device info with firmware/hardware data after first refresh."""
-#    data = hub.inverter_data
-#    if not data:
-#        return
-#
+def _update_device_info_from_hub_data(hub: OvumModbusHub) -> None:
+    """Enrich device info with firmware/hardware data after first refresh."""
+    data = hub.firmware_data
+    if not data:
+        return
+
 #    sw_version = _join_version(data, "dv", "mcv", "scv")
-#    if sw_version:
-#        hub.device_info["sw_version"] = sw_version
-#
+    sw_version = data.get("firmware_data")
+    if sw_version:
+        hub.device_info["sw_version"] = str(data.get("firmware_data"))
+
 #    hw_version = _join_version(data, "disphwversion", "ctrlhwversion", "powerhwversion")
 #    if hw_version:
 #        hub.device_info["hw_version"] = hw_version
